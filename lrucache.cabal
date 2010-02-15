@@ -1,6 +1,6 @@
 Name:                lrucache
 Version:             0.1
-Synopsis:            a pure, fixed-size LRU Cache with a concurrency-safe IO wrapper
+Synopsis:            a simple pure LRU cache
 License:             BSD3
 License-file:        LICENSE
 Author:              Carl Howells

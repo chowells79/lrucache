@@ -1,7 +1,7 @@
--- | This module contains an atomic wrapping of an LRU in the IO
--- monad, for mutable access in a concurrent environment.  All calls
--- preserve the same semantics as those in "Data.Cache.LRU", but performs
--- updates in place.
+-- | This module contains a mutable wrapping of an LRU in the IO
+-- monad, providing atomic access in a concurrent environment.  All
+-- calls preserve the same semantics as those in "Data.Cache.LRU", but
+-- perform updates in place.
 --
 -- (This implementation uses an MVar for coarse locking. It's unclear
 -- if anything else would give better performance, given that many
