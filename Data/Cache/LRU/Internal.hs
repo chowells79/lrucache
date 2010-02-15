@@ -117,7 +117,22 @@ lookup key lru = case Map.lookup key $ content lru of
 
 -- |
 delete :: Ord key => key -> LRU key val -> (LRU key val, Bool)
-delete key lru = (lru, key `Map.member` content lru)
+delete key lru = maybe (lru, False) delete' mLV
+    where
+      cont = content lru
+      (mLV, cont') = Map.updateLookupWithKey (\_ _ -> Nothing) key cont
+
+      delete' lv = if Map.null cont' then deleteOnly else deleteOne
+          where
+            deleteOnly = (lru { first = Nothing
+                              , last = Nothing
+                              , content = cont'
+                              }, True)
+
+            Just firstKey = first lru
+            deleteOne = (lru, True) -- if firstKey == key then deleteFirst else deleteNotFirst
+
+            deleteFirst = lru { first = next lv }
 
 -- | Returns the number of elements the LRU currently contains.
 size :: LRU key val -> Int
