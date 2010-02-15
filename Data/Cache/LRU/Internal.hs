@@ -36,8 +36,8 @@ data LinkedVal key val = Link {
 -- specified number of entries.
 newLRU :: (Ord key) => Int -- ^ the maximum size of the LRU
        -> LRU key val
-newLRU size | size <= 0 = error "non-positive size LRU"
-            | otherwise = LRU Nothing Nothing size Map.empty
+newLRU s | s <= 0 = error "non-positive size LRU"
+         | otherwise = LRU Nothing Nothing s Map.empty
 
 -- | Build a new LRU from the given maximum size and list of contents,
 -- in order from most recently accessed to least recently accessed.
@@ -114,6 +114,10 @@ lookup :: Ord key => key -> LRU key val -> (LRU key val, Maybe val)
 lookup key lru = case Map.lookup key $ content lru of
                            Nothing -> (lru, Nothing)
                            Just lv -> (hit' key lru, Just . value $ lv)
+
+-- | Returns the number of elements the LRU currently contains.
+size :: LRU key val -> Int
+size = Map.size . content
 
 -- | Internal function.  The key passed in must be present in the
 -- LRU.  Moves the item associated with that key to the most
