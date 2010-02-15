@@ -71,9 +71,9 @@ execute (H (k, h)) = execute' (h []) (newLRU k)
         let pre = toList lru
             post = toList lru'
             projected = filter ((key /=) . fst) pre
-            shortened = length projected == length post
+            shouldShorten = length projected /= length pre
 
-        when (present /= shortened) $ throw "unexpected resulting bool"
+        when (present /= shouldShorten) $ throw "unexpected resulting bool"
         when (projected /= post) $ throw "unexpected resulting lru"
         return lru'
 
