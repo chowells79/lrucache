@@ -1,0 +1,49 @@
+Name:                lrucache
+Version:             0.1
+Synopsis:            a pure, fixed-size LRU Cache with a concurrency-safe IO wrapper
+License:             BSD3
+License-file:        LICENSE
+Author:              Carl Howells
+Maintainer:          chowells79@gmail.com
+Copyright:           Carl Howells 2010
+Stability:           Experimental
+Category:            Data
+Build-type:          Simple
+Description:
+        This package contains a simple pure LRU cache, implemented in
+        terms of "Data.Map". It also contains an IO wrapper to provide
+        atomic updates to a mutable LRU cache.
+
+-- Extra files to be distributed with the package, such as examples or
+-- a README.
+-- Extra-source-files:
+
+Cabal-version:       >=1.2
+
+Flag Allow-Warnings
+  Description: Compile without -Werror
+  Default: False
+
+Flag Test
+  Description: Build test executables
+  Default: False
+
+Library
+  -- Modules exported by the library.
+  Exposed-modules:
+        Data.Cache.LRU,
+        Data.Cache.LRU.IO
+        Data.Cache.LRU.Internal
+
+  -- Packages needed in order to build this package.
+  Build-depends:
+        base < 4.2,
+        containers < 0.3
+
+  -- Modules not exported by this package.
+  -- Other-modules:
+
+  if flag(allow-warnings)
+    GHC-Options:	     -Wall -O2
+  else
+    GHC-Options:	     -Wall -O2 -Werror
