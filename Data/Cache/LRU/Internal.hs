@@ -34,14 +34,14 @@ data LinkedVal key val = Link {
 
 -- | Make an LRU.  The LRU is guaranteed to not grow above the
 -- specified number of entries.
-newLRU :: (Ord key) => Int -- ^ the size of the LRU
+newLRU :: (Ord key) => Int -- ^ the maximum size of the LRU
        -> LRU key val
 newLRU size | size <= 0 = error "non-positive size LRU"
             | otherwise = LRU Nothing Nothing size Map.empty
 
 -- | Build a new LRU from the given maximum size and list of contents,
 -- in order from most recently accessed to least recently accessed.
-fromList :: Ord key => Int -- ^ the maximum size
+fromList :: Ord key => Int -- ^ the maximum size of the LRU
          -> [(key, val)] -> LRU key val
 fromList s l = appendAll $ newLRU s
     where appendAll = foldr ins id l
@@ -130,7 +130,8 @@ hit' key lru = if key == firstKey then lru else notFirst
           notFirst = if key == lastKey then replaceLast else replaceMiddle
 
           adjFront = Map.adjust (\v -> v { prev = Just key}) firstKey .
-                     Map.adjust (\v -> v { prev = Nothing, next = first lru }) key
+                     Map.adjust (\v -> v { prev = Nothing
+                                         , next = first lru }) key
 
           -- key was the last entry in the list
           replaceLast = lru { first = Just key
@@ -138,7 +139,8 @@ hit' key lru = if key == firstKey then lru else notFirst
                             , content = cLast
                             }
           Just pKey = prev lastLV
-          cLast = Map.adjust (\v -> v { next = Nothing }) pKey . adjFront $ conts
+          cLast = Map.adjust (\v -> v { next = Nothing }) pKey . adjFront $
+                  conts
 
           -- the key wasn't the first or last key
           replaceMiddle = lru { first = Just key
