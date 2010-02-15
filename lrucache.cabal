@@ -24,7 +24,7 @@ Cabal-version:       >=1.2
 
 Flag Allow-Warnings
   Description: Compile without -Werror
-  Default: False
+  Default: True
 
 Flag Test
   Description: Build test executables
