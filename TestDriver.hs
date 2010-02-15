@@ -19,12 +19,14 @@ import Test.QuickCheck.Property ( Result(..), result, succeeded )
 
 data Action key val = Insert key val
                     | Lookup key
+                    | Delete key
                       deriving (Show, Eq)
 
 instance Arbitrary (Action Int Int) where
-    arbitrary = oneof [ins, look]
+    arbitrary = oneof [ins, look, del]
         where ins = liftM2 Insert key $ choose (100, 104)
               look = liftM Lookup key
+              del = liftM Delete key
               key = choose (1, 10)
 
     shrink = shrinkNothing
@@ -50,16 +52,6 @@ execute (H (k, h)) = execute' (h []) (newLRU k)
       execute' [] lru = return lru
       execute' (x:xs) lru = executeA x lru >>= execute' xs
 
-      executeA (Insert key val) lru = execA' key val lru $ insert key val lru
-
-      executeA (Lookup key) lru = do
-        let (lru', mVal) = lookup key lru
-        case mVal of
-          Nothing -> do when (toList lru /= toList lru') $
-                             throw "unexpected result"
-                        return lru'
-          Just val -> execA' key val lru lru'
-
       execA' key val lru lru' = do
         when (not . valid $ lru') $ throw "not valid"
 
@@ -71,6 +63,29 @@ execute (H (k, h)) = execute' (h []) (newLRU k)
         when (projected /= post) $ throw "unexpected result"
 
         return lru'
+
+      executeA (Delete key) lru = do
+        let (lru', present) = delete key lru
+        when (not . valid $ lru') $ throw "not valid"
+
+        let pre = toList lru
+            post = toList lru'
+            projected = filter ((key /=) . fst) pre
+            shouldShorten = length projected /= length pre
+
+        when (present /= shouldShorten) $ throw "unexpected resulting bool"
+        when (projected /= post) $ throw "unexpected resulting lru"
+        return lru'
+
+      executeA (Insert key val) lru = execA' key val lru $ insert key val lru
+
+      executeA (Lookup key) lru = case mVal of
+                                    Nothing -> checkSame
+                                    Just val -> execA' key val lru lru'
+          where (lru', mVal) = lookup key lru
+                checkSame = do when (toList lru /= toList lru') $
+                                    throw "unexpected result"
+                               return lru'
 
 executesProperly :: History Int Int -> Result
 executesProperly h = case execute h of
