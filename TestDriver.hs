@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 import Prelude hiding ( lookup )
 
 import Control.Monad
@@ -5,26 +6,42 @@ import Control.Monad.Exception.Synchronous
 
 import Data.Cache.LRU.Internal
 
-main :: IO ()
-main = putStrLn "foo"
+import Test.QuickCheck
+    ( Arbitrary(..)
+    , Args(..)
+    , choose
+    , oneof
+    , shrinkNothing
+    , quickCheckWith
+    , stdArgs
+    )
+import Test.QuickCheck.Property ( Result(..), result, succeeded )
 
 data Action key val = Insert key val
                     | Lookup key
                       deriving (Show, Eq)
 
+instance Arbitrary (Action Int Int) where
+    arbitrary = oneof [ins, look]
+        where ins = liftM2 Insert key $ choose (100, 104)
+              look = liftM Lookup key
+              key = choose (1, 10)
+
+    shrink = shrinkNothing
+
 newtype History key val = H (Int, [Action key val] -> [Action key val])
+
+instance Arbitrary (History Int Int) where
+    arbitrary = liftM2 (curry H) s h
+        where s = choose (1, 5)
+              h = liftM (++) arbitrary
+
+    shrink (H (k, h)) = map (H . (,) k . (++)) . drops . h $ []
+        where drops [] = []
+              drops (x:xs) = xs:[x:ys | ys <- drops xs]
 
 instance (Show key, Show val) => Show (History key val) where
     show (H (k, h)) = show (k, h [])
-
-snoc :: Action key val -> History key val -> History key val
-snoc a (H (k, h)) = H (k, h . (a:))
-
-cons :: Action key val -> History key val -> History key val
-cons a (H (k, h)) = H (k, (a:) . h)
-
-empty :: Int -> History key val
-empty k = H (k, id)
 
 execute :: (Ord key, Eq val, Show key, Show val) => History key val
         -> Exceptional String (LRU key val)
@@ -55,7 +72,12 @@ execute (H (k, h)) = execute' (h []) (newLRU k)
 
         return lru'
 
-executeIO :: (Ord key, Eq val, Show key, Show val) => History key val -> IO ()
-executeIO h = case execute h of
-                Exception s -> putStrLn $ "Error: " ++ s
-                Success c -> putStrLn $ "Success: " ++ (show . toList $ c)
+executesProperly :: History Int Int -> Result
+executesProperly h = case execute h of
+                       Success _ -> succeeded
+                       Exception e -> result { ok = Just False
+                                             , reason = e
+                                             }
+
+main :: IO ()
+main = quickCheckWith stdArgs { maxSuccess = 1000 } executesProperly

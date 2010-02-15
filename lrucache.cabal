@@ -32,7 +32,7 @@ Flag Test
 
 Library
   Exposed-modules:
-        Data.Cache.LRU,
+        Data.Cache.LRU
         Data.Cache.LRU.IO
         Data.Cache.LRU.Internal
 
@@ -52,7 +52,8 @@ Executable test
 
     Build-Depends:
         base < 4.2,
-        explicit-exception == 0.1.*
+        explicit-exception == 0.1.*,
+        QuickCheck == 2.1.*
 
   else
     Buildable: False
