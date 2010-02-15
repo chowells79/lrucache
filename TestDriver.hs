@@ -63,7 +63,9 @@ execute (H (k, h)) = execute' (h []) (newLRU k)
 
         return lru'
 
-      executeA (Delete key) lru = undefined
+      executeA (Delete key) lru = do
+        let (lru', present) = delete key lru
+        when (not . valid $ lru') $ throw "not valid"
 
       executeA (Insert key val) lru = execA' key val lru $ insert key val lru
 
