@@ -211,9 +211,9 @@ hit' key lru = if key == firstKey then lru else notFirst
 --
 -- 3. The linked list contains the same number of nodes as the cache.
 valid :: Ord key => LRU key val -> Bool
-valid lru = Map.size contents <= maxSize lru &&
+valid lru = size lru <= maxSize lru &&
             reverse orderedKeys == reverseKeys &&
-            Map.size contents == length orderedKeys
+            size lru == length orderedKeys
     where contents = content lru
           orderedKeys = traverse next . first $ lru
           traverse _ Nothing = []
