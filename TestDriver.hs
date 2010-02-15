@@ -23,9 +23,10 @@ data Action key val = Insert key val
                       deriving (Show, Eq)
 
 instance Arbitrary (Action Int Int) where
-    arbitrary = oneof [ins, look]
+    arbitrary = oneof [ins, look, del]
         where ins = liftM2 Insert key $ choose (100, 104)
               look = liftM Lookup key
+              del = liftM Delete key
               key = choose (1, 10)
 
     shrink = shrinkNothing
@@ -66,6 +67,15 @@ execute (H (k, h)) = execute' (h []) (newLRU k)
       executeA (Delete key) lru = do
         let (lru', present) = delete key lru
         when (not . valid $ lru') $ throw "not valid"
+
+        let pre = toList lru
+            post = toList lru'
+            projected = filter ((key /=) . fst) pre
+            shortened = length projected == length post
+
+        when (present /= shortened) $ throw "unexpected resulting bool"
+        when (projected /= post) $ throw "unexpected resulting lru"
+        return lru'
 
       executeA (Insert key val) lru = execA' key val lru $ insert key val lru
 
