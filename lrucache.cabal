@@ -34,8 +34,8 @@ Library
         Data.Cache.LRU.Internal
 
   Build-depends:
-        base < 4.2,
-        containers < 0.3
+        base < 5,
+        containers
 
   GHC-Options:             -Wall
 
