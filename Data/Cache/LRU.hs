@@ -14,6 +14,7 @@ module Data.Cache.LRU
     , maxSize
     , insert
     , lookup
+    , delete
     , size
     )
 where

@@ -115,6 +115,10 @@ lookup key lru = case Map.lookup key $ content lru of
                            Nothing -> (lru, Nothing)
                            Just lv -> (hit' key lru, Just . value $ lv)
 
+-- |
+delete :: Ord key => key -> LRU key val -> (LRU key val, Bool)
+delete key lru = (lru, key `Map.member` content lru)
+
 -- | Returns the number of elements the LRU currently contains.
 size :: LRU key val -> Int
 size = Map.size . content

@@ -19,6 +19,7 @@ import Test.QuickCheck.Property ( Result(..), result, succeeded )
 
 data Action key val = Insert key val
                     | Lookup key
+                    | Delete key
                       deriving (Show, Eq)
 
 instance Arbitrary (Action Int Int) where
@@ -50,16 +51,6 @@ execute (H (k, h)) = execute' (h []) (newLRU k)
       execute' [] lru = return lru
       execute' (x:xs) lru = executeA x lru >>= execute' xs
 
-      executeA (Insert key val) lru = execA' key val lru $ insert key val lru
-
-      executeA (Lookup key) lru = do
-        let (lru', mVal) = lookup key lru
-        case mVal of
-          Nothing -> do when (toList lru /= toList lru') $
-                             throw "unexpected result"
-                        return lru'
-          Just val -> execA' key val lru lru'
-
       execA' key val lru lru' = do
         when (not . valid $ lru') $ throw "not valid"
 
@@ -71,6 +62,18 @@ execute (H (k, h)) = execute' (h []) (newLRU k)
         when (projected /= post) $ throw "unexpected result"
 
         return lru'
+
+      executeA (Delete key) lru = undefined
+
+      executeA (Insert key val) lru = execA' key val lru $ insert key val lru
+
+      executeA (Lookup key) lru = case mVal of
+                                    Nothing -> checkSame
+                                    Just val -> execA' key val lru lru'
+          where (lru', mVal) = lookup key lru
+                checkSame = do when (toList lru /= toList lru') $
+                                    throw "unexpected result"
+                               return lru'
 
 executesProperly :: History Int Int -> Result
 executesProperly h = case execute h of

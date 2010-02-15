@@ -14,6 +14,7 @@ module Data.Cache.LRU.IO
     , maxSize
     , insert
     , lookup
+    , delete
     , size
     )
 where
@@ -63,6 +64,10 @@ insert key val (C mvar) = modifyMVar_ mvar $ return . LRU.insert key val
 -- semantics.
 lookup :: Ord key => key -> AtomicLRU key val -> IO (Maybe val)
 lookup key (C mvar) = modifyMVar mvar $ return . LRU.lookup key
+
+-- |
+delete :: (Ord key) => key -> AtomicLRU key val -> IO Bool
+delete key (C mvar) = modifyMVar mvar $ return . LRU.delete key
 
 -- | Returns the number of elements the AtomicLRU currently contains.
 size :: AtomicLRU key val -> IO Int
