@@ -5,7 +5,7 @@ License:             BSD3
 License-file:        LICENSE
 Author:              Carl Howells
 Maintainer:          chowells79@gmail.com
-Copyright:           Carl Howells 2010
+Copyright:           Carl Howells, 2010
 Homepage:            http://github.com/chowells79/lrucache
 Stability:           Experimental
 Category:            Data
@@ -20,11 +20,7 @@ Description:
 Extra-source-files:
         README
 
-Cabal-version:       >=1.2
-
-Flag Allow-Warnings
-  Description: Compile without -Werror
-  Default: True
+Cabal-version:       >=1.6
 
 Flag Test
   Description: Build test executables
@@ -40,10 +36,7 @@ Library
         base < 4.2,
         containers < 0.3
 
-  if flag(allow-warnings)
-    GHC-Options:	     -Wall -O2
-  else
-    GHC-Options:	     -Wall -O2 -Werror
+  GHC-Options:             -Wall
 
 
 Executable test
@@ -58,8 +51,5 @@ Executable test
   else
     Buildable: False
 
-  Main-is:                   TestDriver.hs
-  if flag(allow-warnings)
-    GHC-Options:	     -Wall -O0
-  else
-    GHC-Options:	     -Wall -Werror -O0
+  Main-is:                 TestDriver.hs
+  GHC-Options:             -Wall
