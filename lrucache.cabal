@@ -19,6 +19,7 @@ Description:
 
 Extra-source-files:
         README
+        TestDriver.hs
 
 Cabal-version:       >=1.6
 
