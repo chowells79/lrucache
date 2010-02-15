@@ -122,17 +122,42 @@ delete key lru = maybe (lru, False) delete' mLV
       cont = content lru
       (mLV, cont') = Map.updateLookupWithKey (\_ _ -> Nothing) key cont
 
-      delete' lv = if Map.null cont' then deleteOnly else deleteOne
+      -- covers all the cases where something is removed
+      delete' lv = (if Map.null cont' then deleteOnly else deleteOne, True)
           where
-            deleteOnly = (lru { first = Nothing
-                              , last = Nothing
-                              , content = cont'
-                              }, True)
+            -- delete the only item in the cache
+            deleteOnly = lru { first = Nothing
+                             , last = Nothing
+                             , content = cont'
+                             }
 
+            -- delete an item that isn't the only item
             Just firstKey = first lru
-            deleteOne = (lru, True) -- if firstKey == key then deleteFirst else deleteNotFirst
+            deleteOne = if firstKey == key then deleteFirst else deleteNotFirst
 
-            deleteFirst = lru { first = next lv }
+            -- delete the first item
+            deleteFirst = lru { first = next lv
+                              , content = contFirst
+                              }
+            Just nKey = next lv
+            contFirst = Map.adjust (\v -> v { prev = Nothing }) nKey cont'
+
+            -- delete an item other than the first
+            Just lastKey = last lru
+            deleteNotFirst = if lastKey == key then deleteLast else deleteMid
+
+            -- delete the last item
+            deleteLast = lru { last = prev lv
+                             , content = contLast
+                             }
+            Just pKey = prev lv
+            contLast = Map.adjust (\v -> v { next = Nothing}) pKey cont'
+
+            -- delete an item in the middle
+            deleteMid = lru { content = contMid }
+            contMid = Map.adjust (\v -> v { next = next lv }) pKey .
+                      Map.adjust (\v -> v { prev = prev lv }) nKey $
+                      cont'
 
 -- | Returns the number of elements the LRU currently contains.
 size :: LRU key val -> Int
