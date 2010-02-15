@@ -14,8 +14,8 @@ Description:
         This package contains a simple pure LRU cache, implemented in
         terms of "Data.Map".
         .
-        It also contains an IO wrapper to provide atomic updates to a
-        mutable LRU cache.
+        It also contains a mutable IO wrapper providing atomic updates to
+        an LRU cache.
 
 Extra-source-files:
         README

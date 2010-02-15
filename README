@@ -1,0 +1,5 @@
+This package contains a simple pure LRU cache, implemented in terms of
+"Data.Map".
+
+It also contains a mutable IO wrapper providing atomic updates to an
+LRU cache.
