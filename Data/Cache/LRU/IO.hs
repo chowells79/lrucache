@@ -65,7 +65,8 @@ insert key val (C mvar) = modifyMVar_ mvar $ return . LRU.insert key val
 lookup :: Ord key => key -> AtomicLRU key val -> IO (Maybe val)
 lookup key (C mvar) = modifyMVar mvar $ return . LRU.lookup key
 
--- |
+-- | Remove an item from an AtomicLRU.  Returns whether the item was
+-- present to be removed.
 delete :: (Ord key) => key -> AtomicLRU key val -> IO Bool
 delete key (C mvar) = modifyMVar mvar $ return . LRU.delete key
 
