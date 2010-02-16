@@ -12,7 +12,6 @@ module Data.Cache.LRU.Internal where
 
 import Prelude hiding ( last, lookup )
 
-import Data.Maybe ( maybe )
 import Data.Map ( Map )
 import qualified Data.Map as Map
 
