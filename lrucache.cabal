@@ -30,8 +30,9 @@ Flag Test
 Library
   Exposed-modules:
         Data.Cache.LRU
-        Data.Cache.LRU.IO
         Data.Cache.LRU.Internal
+        Data.Cache.LRU.IO
+        Data.Cache.LRU.IO.Internal
 
   Build-depends:
         base > 4 && < 5,
