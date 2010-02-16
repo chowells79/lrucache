@@ -11,7 +11,7 @@ Stability:           Experimental
 Category:            Data
 Build-type:          Simple
 Description:
-        This package contains a simple pure LRU cache, implemented in
+        This package contains a simple, pure LRU cache, implemented in
         terms of "Data.Map".
         .
         It also contains a mutable IO wrapper providing atomic updates to
