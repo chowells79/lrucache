@@ -102,11 +102,8 @@ insert key val lru = maybe emptyCase nonEmptyCase $ first lru
             -- remove the last item
             Just lastKey = last lru'
             Just lastLV = Map.lookup lastKey contents'
-            Just pKey = prev lastLV
-            contents'' = Map.delete lastKey .
-                         Map.adjust (\v -> v { next = Nothing }) pKey $
-                         contents'
-            lru'' = lru' { last = Just pKey, content = contents'' }
+            contents'' = Map.delete lastKey contents'
+            lru'' = delete' lastKey lru' contents'' lastLV
 
 -- | Look up an item in an LRU.  If it was present, it is marked as
 -- the most recently accesed in the returned LRU.
@@ -118,47 +115,10 @@ lookup key lru = case Map.lookup key $ content lru of
 -- | Remove an item from an LRU.  Returns the new LRU, and if the item
 -- was present to be removed.
 delete :: Ord key => key -> LRU key val -> (LRU key val, Bool)
-delete key lru = maybe (lru, False) delete' mLV
+delete key lru = maybe (lru, False) delete'' mLV
     where
-      cont = content lru
-      (mLV, cont') = Map.updateLookupWithKey (\_ _ -> Nothing) key cont
-
-      -- covers all the cases where something is removed
-      delete' lv = (if Map.null cont' then deleteOnly else deleteOne, True)
-          where
-            -- delete the only item in the cache
-            deleteOnly = lru { first = Nothing
-                             , last = Nothing
-                             , content = cont'
-                             }
-
-            -- delete an item that isn't the only item
-            Just firstKey = first lru
-            deleteOne = if firstKey == key then deleteFirst else deleteNotFirst
-
-            -- delete the first item
-            deleteFirst = lru { first = next lv
-                              , content = contFirst
-                              }
-            Just nKey = next lv
-            contFirst = Map.adjust (\v -> v { prev = Nothing }) nKey cont'
-
-            -- delete an item other than the first
-            Just lastKey = last lru
-            deleteNotFirst = if lastKey == key then deleteLast else deleteMid
-
-            -- delete the last item
-            deleteLast = lru { last = prev lv
-                             , content = contLast
-                             }
-            Just pKey = prev lv
-            contLast = Map.adjust (\v -> v { next = Nothing}) pKey cont'
-
-            -- delete an item in the middle
-            deleteMid = lru { content = contMid }
-            contMid = Map.adjust (\v -> v { next = next lv }) pKey .
-                      Map.adjust (\v -> v { prev = prev lv }) nKey $
-                      cont'
+      delete'' = flip (,) True . delete' key lru cont'
+      (mLV, cont') = Map.updateLookupWithKey (\_ _ -> Nothing) key $ content lru
 
 -- | Returns the number of elements the LRU currently contains.
 size :: LRU key val -> Int
@@ -201,6 +161,63 @@ hit' key lru = if key == firstKey then lru else notFirst
           cMid = Map.adjust (\v -> v { next = Just nextKey }) prevKey .
                  Map.adjust (\v -> v { prev = Just prevKey }) nextKey .
                  adjFront $ conts
+
+-- | An internal function used by 'insert' (when the cache is full)
+-- and 'delete'.  This function has strict requirements on its
+-- arguments in order to work properly.
+--
+-- As this is intended to be an internal function, the arguments were
+-- chosen to avoid repeated computation, rather than for simplicity of
+-- calling this function.
+delete' :: Ord key => key -- ^ The key must be present in the provided 'LRU'
+        -> LRU key val -- ^ This is the 'LRU' to modify
+        -> Map key (LinkedVal key val) -- ^ this is the 'Map' from the
+                                       -- previous argument, but with
+                                       -- the key already removed from
+                                       -- it.  This isn't consistent
+                                       -- yet, as it still might
+                                       -- contain LinkedVals with
+                                       -- pointers to the removed key.
+        -> LinkedVal key val -- ^ This is the 'LinkedVal' that
+                             -- corresponds to the key in the passed
+                             -- in LRU. It is absent from the passed
+                             -- in map.
+        -> LRU key val
+delete' key lru cont' lv = if Map.null cont' then deleteOnly else deleteOne
+    where
+      -- delete the only item in the cache
+      deleteOnly = lru { first = Nothing
+                       , last = Nothing
+                       , content = cont'
+                       }
+
+      -- delete an item that isn't the only item
+      Just firstKey = first lru
+      deleteOne = if firstKey == key then deleteFirst else deleteNotFirst
+
+      -- delete the first item
+      deleteFirst = lru { first = next lv
+                        , content = contFirst
+                        }
+      Just nKey = next lv
+      contFirst = Map.adjust (\v -> v { prev = Nothing }) nKey cont'
+
+      -- delete an item other than the first
+      Just lastKey = last lru
+      deleteNotFirst = if lastKey == key then deleteLast else deleteMid
+
+      -- delete the last item
+      deleteLast = lru { last = prev lv
+                       , content = contLast
+                       }
+      Just pKey = prev lv
+      contLast = Map.adjust (\v -> v { next = Nothing}) pKey cont'
+
+      -- delete an item in the middle
+      deleteMid = lru { content = contMid }
+      contMid = Map.adjust (\v -> v { next = next lv }) pKey .
+                Map.adjust (\v -> v { prev = prev lv }) nKey $
+                cont'
 
 -- | Internal function.  This checks the three structural invariants
 -- of the LRU cache structure:
