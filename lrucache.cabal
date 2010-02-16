@@ -34,8 +34,8 @@ Library
         Data.Cache.LRU.Internal
 
   Build-depends:
-        base < 5,
-        containers
+        base > 4 && < 5,
+        containers > 0.2 && < 0.4
 
   GHC-Options:             -Wall
 
@@ -45,7 +45,6 @@ Executable test
     Buildable: True
 
     Build-Depends:
-        base < 4.2,
         explicit-exception == 0.1.*,
         QuickCheck == 2.1.*
 
