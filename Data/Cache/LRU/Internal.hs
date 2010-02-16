@@ -85,7 +85,7 @@ insert key val lru = maybe emptyCase nonEmptyCase $ first lru
       -- the most recently accessed
       hitSet = hit' key lru'
           where lru' = lru { content = contents' }
-                contents' = Map.adjust (\v -> v {value = val}) key contents
+                contents' = adjust' (\v -> v {value = val}) key contents
 
       -- create a new LRU with a new first item, and
       -- conditionally dropping the last item
@@ -94,7 +94,7 @@ insert key val lru = maybe emptyCase nonEmptyCase $ first lru
             -- add a new first item
             firstLV' = Link val Nothing $ Just firstKey
             contents' = Map.insert key firstLV' .
-                        Map.adjust (\v -> v { prev = Just key }) firstKey $
+                        adjust' (\v -> v { prev = Just key }) firstKey $
                         contents
             lru' = lru { first = Just key, content = contents' }
 
@@ -137,9 +137,9 @@ hit' key lru = if key == firstKey then lru else notFirst
           -- will be needed
           notFirst = if key == lastKey then replaceLast else replaceMiddle
 
-          adjFront = Map.adjust (\v -> v { prev = Just key}) firstKey .
-                     Map.adjust (\v -> v { prev = Nothing
-                                         , next = first lru }) key
+          adjFront = adjust' (\v -> v { prev = Just key}) firstKey .
+                     adjust' (\v -> v { prev = Nothing
+                                      , next = first lru }) key
 
           -- key was the last entry in the list
           replaceLast = lru { first = Just key
@@ -147,8 +147,7 @@ hit' key lru = if key == firstKey then lru else notFirst
                             , content = cLast
                             }
           Just pKey = prev lastLV
-          cLast = Map.adjust (\v -> v { next = Nothing }) pKey . adjFront $
-                  conts
+          cLast = adjust' (\v -> v { next = Nothing }) pKey . adjFront $ conts
 
           -- the key wasn't the first or last key
           replaceMiddle = lru { first = Just key
@@ -157,8 +156,8 @@ hit' key lru = if key == firstKey then lru else notFirst
           Just keyLV = Map.lookup key conts
           Just prevKey = prev keyLV
           Just nextKey = next keyLV
-          cMid = Map.adjust (\v -> v { next = Just nextKey }) prevKey .
-                 Map.adjust (\v -> v { prev = Just prevKey }) nextKey .
+          cMid = adjust' (\v -> v { next = Just nextKey }) prevKey .
+                 adjust' (\v -> v { prev = Just prevKey }) nextKey .
                  adjFront $ conts
 
 -- | An internal function used by 'insert' (when the cache is full)
@@ -199,7 +198,7 @@ delete' key lru cont' lv = if Map.null cont' then deleteOnly else deleteOne
                         , content = contFirst
                         }
       Just nKey = next lv
-      contFirst = Map.adjust (\v -> v { prev = Nothing }) nKey cont'
+      contFirst = adjust' (\v -> v { prev = Nothing }) nKey cont'
 
       -- delete an item other than the first
       Just lastKey = last lru
@@ -210,13 +209,23 @@ delete' key lru cont' lv = if Map.null cont' then deleteOnly else deleteOne
                        , content = contLast
                        }
       Just pKey = prev lv
-      contLast = Map.adjust (\v -> v { next = Nothing}) pKey cont'
+      contLast = adjust' (\v -> v { next = Nothing}) pKey cont'
 
       -- delete an item in the middle
       deleteMid = lru { content = contMid }
-      contMid = Map.adjust (\v -> v { next = next lv }) pKey .
-                Map.adjust (\v -> v { prev = prev lv }) nKey $
+      contMid = adjust' (\v -> v { next = next lv }) pKey .
+                adjust' (\v -> v { prev = prev lv }) nKey $
                 cont'
+
+-- | Internal function.  This is very similar to 'Map.adjust', with
+-- two major differences.  First, it's strict in the application of
+-- the function, which is a huge win when working with this structure.
+--
+-- Second, it requires that the key be present in order to work.  If
+-- the key isn't present, 'undefined' will be inserted into the 'Map',
+-- which will cause problems later.
+adjust' :: Ord k => (a -> a) -> k -> Map k a -> Map k a
+adjust' f k m = Map.insertWith' (\_ o -> f o) k undefined m
 
 -- | Internal function.  This checks the three structural invariants
 -- of the LRU cache structure:
