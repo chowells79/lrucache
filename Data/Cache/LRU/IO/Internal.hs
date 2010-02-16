@@ -1,3 +1,5 @@
+{-# OPTIONS_HADDOCK not-home #-}
+
 -- | This module contains a mutable wrapping of an LRU in the IO
 -- monad, providing atomic access in a concurrent environment.  All
 -- calls preserve the same semantics as those in "Data.Cache.LRU", but
