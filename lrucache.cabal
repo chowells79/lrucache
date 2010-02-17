@@ -1,5 +1,5 @@
 Name:                lrucache
-Version:             0.1.1
+Version:             0.2
 Synopsis:            a simple, pure LRU cache
 License:             BSD3
 License-file:        LICENSE
@@ -18,6 +18,9 @@ Description:
         an LRU cache.
         .
         Version History:
+        .
+        0.2 - Added an Eq instance for LRU.
+              Added strictness to eliminate space leaks in common use patterns.
         .
         0.1.1 - Add the Data.Cache.LRU.IO.Internal module.
                 Clean up build warnings on GHC 6.12.1.
