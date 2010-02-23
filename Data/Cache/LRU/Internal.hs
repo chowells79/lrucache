@@ -17,18 +17,18 @@ import qualified Data.Map as Map
 
 -- | Stores the information that makes up an LRU cache
 data LRU key val = LRU {
-      first :: Maybe key -- ^ the key of the most recently accessed entry
-    , last :: Maybe key -- ^ the key of the least recently accessed entry
-    , maxSize :: Int -- ^ the maximum size of the LRU cache
-    , content :: Map key (LinkedVal key val) -- ^ the backing 'Map'
+      first :: !(Maybe key) -- ^ the key of the most recently accessed entry
+    , last :: !(Maybe key) -- ^ the key of the least recently accessed entry
+    , maxSize :: !Int -- ^ the maximum size of the LRU cache
+    , content :: !(Map key (LinkedVal key val)) -- ^ the backing 'Map'
     } deriving Eq
 
 -- | The values stored in the Map of the LRU cache.  They embed a
 -- doubly-linked list through the values of the 'Map'.
 data LinkedVal key val = Link {
       value :: val -- ^ The actual value
-    , prev :: Maybe key -- ^ the key of the value before this one
-    , next :: Maybe key -- ^ the key of the value after this one
+    , prev :: !(Maybe key) -- ^ the key of the value before this one
+    , next :: !(Maybe key) -- ^ the key of the value after this one
     } deriving Eq
 
 -- | Make an LRU.  The LRU is guaranteed to not grow above the
