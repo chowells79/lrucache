@@ -1,5 +1,5 @@
 Name:                lrucache
-Version:             0.2
+Version:             0.2.0.1
 Synopsis:            a simple, pure LRU cache
 License:             BSD3
 License-file:        LICENSE
@@ -19,6 +19,10 @@ Description:
         .
         Version History:
         .
+        0.2.0.1 - Increase strictness slightly.
+                  Remove cabal target for test executable.
+                  (Just include test sources instead.)
+        .
         0.2 - Added an Eq instance for LRU.
               Added strictness to eliminate space leaks in common use patterns.
         .
@@ -31,13 +35,10 @@ Description:
 
 Extra-source-files:
         README
-        TestDriver.hs
+        MemTest.hs
+        OpTest.hs
 
 Cabal-version:       >=1.6
-
-Flag Test
-  Description: Build test executables
-  Default: False
 
 Library
   Exposed-modules:
@@ -47,22 +48,7 @@ Library
         Data.Cache.LRU.IO.Internal
 
   Build-depends:
-        base > 4 && < 5,
-        containers > 0.2 && < 0.4
+        base >= 4 && < 5,
+        containers >= 0.2 && < 0.4
 
-  GHC-Options:             -Wall
-
-
-Executable test
-  if flag(test)
-    Buildable: True
-
-    Build-Depends:
-        explicit-exception == 0.1.*,
-        QuickCheck == 2.1.*
-
-  else
-    Buildable: False
-
-  Main-is:                 TestDriver.hs
   GHC-Options:             -Wall
