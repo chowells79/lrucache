@@ -1,5 +1,5 @@
 Name:                lrucache
-Version:             0.2.0.1
+Version:             0.3
 Synopsis:            a simple, pure LRU cache
 License:             BSD3
 License-file:        LICENSE
@@ -18,6 +18,8 @@ Description:
         an LRU cache.
         .
         Version History:
+        .
+        0.3 - Added a Show instance for LRU. (Requested by Ben Lee)
         .
         0.2.0.1 - Increase strictness slightly.
                   Remove cabal target for test executable.

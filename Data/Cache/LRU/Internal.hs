@@ -23,6 +23,10 @@ data LRU key val = LRU {
     , content :: !(Map key (LinkedVal key val)) -- ^ the backing 'Map'
     } deriving Eq
 
+
+instance (Ord key, Show key, Show val) => Show (LRU key val) where
+    show lru = "fromList " ++ show (toList lru)
+
 -- | The values stored in the Map of the LRU cache.  They embed a
 -- doubly-linked list through the values of the 'Map'.
 data LinkedVal key val = Link {
