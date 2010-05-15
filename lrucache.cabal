@@ -36,9 +36,11 @@ Description:
         0.1 - First release
 
 Extra-source-files:
+        LICENSE
         README
         MemTest.hs
         OpTest.hs
+        Setup.hs
 
 Cabal-version:       >=1.6
 
