@@ -25,23 +25,24 @@ import qualified Data.Cache.LRU as LRU
 -- | The opaque wrapper type
 newtype AtomicLRU key val = C (MVar (LRU key val))
 
--- | Make a new AtomicLRU with the given maximum size.
-newAtomicLRU :: Ord key => Int -- ^ the maximum size
+-- | Make a new AtomicLRU that will not grow beyond the optional
+-- maximum size.
+newAtomicLRU :: Ord key => Maybe Int -- ^ the optional maximum size
              -> IO (AtomicLRU key val)
 newAtomicLRU = fmap C . MV.newMVar . LRU.newLRU
 
--- | Build a new LRU from the given maximum size and list of
+-- | Build a new LRU from the optional maximum size and list of
 -- contents. See 'LRU.fromList' for the semantics.
-fromList :: Ord key => Int -- ^ the maximum size
+fromList :: Ord key => Maybe Int -- ^ the optional maximum size
             -> [(key, val)] -> IO (AtomicLRU key val)
 fromList s l = fmap C . MV.newMVar $ LRU.fromList s l
 
--- | Retreive a list view of an AtomicLRU.  See 'LRU.toList' for the
+-- | Retrieve a list view of an AtomicLRU.  See 'LRU.toList' for the
 -- semantics.
 toList :: Ord key => AtomicLRU key val -> IO [(key, val)]
 toList (C mvar) = LRU.toList <$> MV.readMVar mvar
 
-maxSize :: AtomicLRU key val -> IO Int
+maxSize :: AtomicLRU key val -> IO (Maybe Int)
 maxSize (C mvar) = LRU.maxSize <$> MV.readMVar mvar
 
 -- | Insert a key/value pair into an AtomicLRU.  See 'LRU.insert' for

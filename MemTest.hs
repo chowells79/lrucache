@@ -8,9 +8,9 @@ import Data.Cache.LRU.IO.Internal
 
 main :: IO ()
 main = do
-  v1 <- newAtomicLRU 10 -- for endless inserts
-  v2 <- newAtomicLRU 10 -- for endless lookups (miss)
-  v3 <- newAtomicLRU 10 -- for endless lookups (hit)
+  v1 <- newAtomicLRU $ Just 10 -- for endless inserts
+  v2 <- newAtomicLRU $ Just 10 -- for endless lookups (miss)
+  v3 <- newAtomicLRU $ Just 10 -- for endless lookups (hit)
 
   counter <- newIORef (0 :: Int)
 

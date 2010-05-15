@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 import Prelude hiding ( lookup )
 
+import Control.Applicative
 import Control.Monad
 import Control.Monad.Exception.Synchronous
 
@@ -9,6 +10,7 @@ import Data.Cache.LRU.Internal
 import Test.QuickCheck
     ( Arbitrary(..)
     , Args(..)
+    , Gen
     , choose
     , oneof
     , shrinkNothing
@@ -31,11 +33,11 @@ instance Arbitrary (Action Int Int) where
 
     shrink = shrinkNothing
 
-newtype History key val = H (Int, [Action key val] -> [Action key val])
+newtype History key val = H (Maybe Int, [Action key val] -> [Action key val])
 
 instance Arbitrary (History Int Int) where
     arbitrary = liftM2 (curry H) s h
-        where s = choose (1, 5)
+        where s = liftM2 (<$) (choose (1, 5)) (arbitrary :: Gen (Maybe ()))
               h = liftM (++) arbitrary
 
     shrink (H (k, h)) = map (H . (,) k . (++)) . drops . h $ []
@@ -59,7 +61,8 @@ execute (H (k, h)) = execute' (h []) (newLRU k)
             post = toList lru'
 
             naive = (key, val) : filter ((key /=) . fst) pre
-            projected = if length naive <= k then naive else init naive
+            sizeOk = maybe True (length naive <=) k
+            projected = if sizeOk then naive else init naive
         when (projected /= post) $ throw "unexpected result"
 
         return lru'
