@@ -53,4 +53,4 @@ Library
         base >= 4 && < 5,
         containers >= 0.2 && < 0.4
 
-  GHC-Options:             -Wall
+  GHC-options:  -Wall -O2
