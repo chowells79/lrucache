@@ -11,7 +11,7 @@
 -- "Data.Cache.LRU.IO", be used instead.
 module Data.Cache.LRU.IO.Internal where
 
-import Prelude hiding ( lookup )
+import Prelude hiding ( lookup, mod, take )
 
 import Control.Applicative ( (<$>) )
 import Control.Concurrent.MVar ( MVar )
@@ -67,23 +67,23 @@ size (C mvar) = LRU.size <$> MV.readMVar mvar
 -- function application to WHNF.
 modifyMVar_' :: MVar a -> (a -> IO a) -> IO ()
 modifyMVar_' mvar f = do
-  let take' = MV.takeMVar mvar
+  let take = MV.takeMVar mvar
       replace = MV.putMVar mvar
-      mod' x = do
+      mod x = do
         x' <- f x
         MV.putMVar mvar $! x'
 
-  bracketOnError take' replace mod'
+  bracketOnError take replace mod
 
 -- | A version of 'MV.modifyMVar' that forces the result of the
 -- function application to WHNF.
 modifyMVar' :: MVar a -> (a -> IO (a, b)) -> IO b
 modifyMVar' mvar f = do
-  let take' = MV.takeMVar mvar
+  let take = MV.takeMVar mvar
       replace = MV.putMVar mvar
-      mod' x = do
+      mod x = do
         (x', result) <- f x
         MV.putMVar mvar $! x'
         return result
 
-  bracketOnError take' replace mod'
+  bracketOnError take replace mod
