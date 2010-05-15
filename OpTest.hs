@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
-import Prelude hiding ( lookup )
+import qualified Prelude
+import Prelude hiding ( lookup, last )
 
 import Control.Applicative
 import Control.Monad
@@ -22,13 +23,15 @@ import Test.QuickCheck.Property ( Result(..), result, succeeded )
 data Action key val = Insert key val
                     | Lookup key
                     | Delete key
+                    | Pop
                       deriving (Show, Eq)
 
 instance Arbitrary (Action Int Int) where
-    arbitrary = oneof [ins, look, del]
+    arbitrary = oneof [ins, look, del, pop]
         where ins = liftM2 Insert key $ choose (100, 104)
               look = liftM Lookup key
               del = liftM Delete key
+              pop = return Pop
               key = choose (1, 10)
 
     shrink = shrinkNothing
@@ -89,6 +92,22 @@ execute (H (k, h)) = execute' (h []) (newLRU k)
                 checkSame = do when (toList lru /= toList lru') $
                                     throw "unexpected result"
                                return lru'
+
+      executeA Pop lru = do
+        let (lru', popped) = pop lru
+        when (not . valid $ lru') $ throw "not valid"
+
+        let pre = toList lru
+            post = toList lru'
+
+            (ePost, ePopped) = case pre of
+                                 [] -> ([], Nothing)
+                                 _  -> (init pre, Just $ Prelude.last pre)
+
+        when (post /= ePost) $ throw "unexpected result lru"
+        when (popped /= ePopped) $ throw "unexpected result key-value"
+        return lru'
+
 
 executesProperly :: History Int Int -> Result
 executesProperly h = case execute h of

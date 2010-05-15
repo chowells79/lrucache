@@ -19,6 +19,7 @@ module Data.Cache.LRU.IO
     , insert
     , lookup
     , delete
+    , pop
     , size
     )
 where

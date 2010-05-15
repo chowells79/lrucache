@@ -60,6 +60,11 @@ lookup key (C mvar) = modifyMVar' mvar $ return . LRU.lookup key
 delete :: Ord key => key -> AtomicLRU key val -> IO (Maybe val)
 delete key (C mvar) = modifyMVar' mvar $ return . LRU.delete key
 
+-- | Remove the least-recently accessed item from an AtomicLRU.
+-- Returns the (key, val) pair removed, if one was present.
+pop :: Ord key => AtomicLRU key val -> IO (Maybe (key, val))
+pop (C mvar) = modifyMVar' mvar $ return . LRU.pop
+
 -- | Returns the number of elements the AtomicLRU currently contains.
 size :: AtomicLRU key val -> IO Int
 size (C mvar) = LRU.size <$> MV.readMVar mvar

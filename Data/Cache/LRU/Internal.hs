@@ -123,6 +123,16 @@ delete key lru = maybe (lru, Nothing) delete'' mLV
       delete'' lv = (delete' key lru cont' lv, Just $ value lv)
       (mLV, cont') = Map.updateLookupWithKey (\_ _ -> Nothing) key $ content lru
 
+-- | Removes the least-recently accessed element from the LRU.
+-- Returns the new LRU, and the key and value from the least-recently
+-- used element, if there was one.
+pop :: Ord key => LRU key val -> (LRU key val, Maybe (key, val))
+pop lru = if size lru == 0 then (lru, Nothing) else (lru', Just pair)
+    where
+      Just lastKey = last lru
+      (lru', Just lastVal) = delete lastKey lru
+      pair = (lastKey, lastVal)
+
 -- | Returns the number of elements the LRU currently contains.
 size :: LRU key val -> Int
 size = Map.size . content
