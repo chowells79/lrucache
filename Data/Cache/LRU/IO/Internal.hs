@@ -61,16 +61,16 @@ delete key (C mvar) = modifyMVar' mvar $ return . LRU.delete key
 size :: AtomicLRU key val -> IO Int
 size (C mvar) = LRU.size <$> MV.readMVar mvar
 
--- | A version of 'MV.modifyMVar_' that applies the modification
--- function strictly.
+-- | A version of 'MV.modifyMVar_' that forces the result of the
+-- function application to WHNF.
 modifyMVar_' :: MVar a -> (a -> IO a) -> IO ()
 modifyMVar_' mvar f = do
   x <- MV.takeMVar mvar
   x' <- f x
   MV.putMVar mvar $! x'
 
--- | A version of 'MV.modifyMVar' that applies the modification
--- function strictly. The returned value is not evaluated strictly.
+-- | A version of 'MV.modifyMVar' that forces the result of the
+-- function application to WHNF.
 modifyMVar' :: MVar a -> (a -> IO (a, b)) -> IO b
 modifyMVar' mvar f = do
   x <- MV.takeMVar mvar
