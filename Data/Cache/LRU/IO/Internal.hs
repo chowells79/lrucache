@@ -17,6 +17,8 @@ import Control.Applicative ( (<$>) )
 import Control.Concurrent.MVar ( MVar )
 import qualified Control.Concurrent.MVar as MV
 
+import Control.Exception ( bracketOnError )
+
 import Data.Cache.LRU ( LRU )
 import qualified Data.Cache.LRU as LRU
 
@@ -65,15 +67,23 @@ size (C mvar) = LRU.size <$> MV.readMVar mvar
 -- function application to WHNF.
 modifyMVar_' :: MVar a -> (a -> IO a) -> IO ()
 modifyMVar_' mvar f = do
-  x <- MV.takeMVar mvar
-  x' <- f x
-  MV.putMVar mvar $! x'
+  let take' = MV.takeMVar mvar
+      replace = MV.putMVar mvar
+      mod' x = do
+        x' <- f x
+        MV.putMVar mvar $! x'
+
+  bracketOnError take' replace mod'
 
 -- | A version of 'MV.modifyMVar' that forces the result of the
 -- function application to WHNF.
 modifyMVar' :: MVar a -> (a -> IO (a, b)) -> IO b
 modifyMVar' mvar f = do
-  x <- MV.takeMVar mvar
-  (x', result) <- f x
-  MV.putMVar mvar $! x'
-  return result
+  let take' = MV.takeMVar mvar
+      replace = MV.putMVar mvar
+      mod' x = do
+        (x', result) <- f x
+        MV.putMVar mvar $! x'
+        return result
+
+  bracketOnError take' replace mod'
