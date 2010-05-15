@@ -117,10 +117,10 @@ lookup key lru = case Map.lookup key $ content lru of
 
 -- | Remove an item from an LRU.  Returns the new LRU, and if the item
 -- was present to be removed.
-delete :: Ord key => key -> LRU key val -> (LRU key val, Bool)
-delete key lru = maybe (lru, False) delete'' mLV
+delete :: Ord key => key -> LRU key val -> (LRU key val, Maybe val)
+delete key lru = maybe (lru, Nothing) delete'' mLV
     where
-      delete'' = flip (,) True . delete' key lru cont'
+      delete'' lv = (delete' key lru cont' lv, Just $ value lv)
       (mLV, cont') = Map.updateLookupWithKey (\_ _ -> Nothing) key $ content lru
 
 -- | Returns the number of elements the LRU currently contains.

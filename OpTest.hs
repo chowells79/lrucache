@@ -68,15 +68,15 @@ execute (H (k, h)) = execute' (h []) (newLRU k)
         return lru'
 
       executeA (Delete key) lru = do
-        let (lru', present) = delete key lru
+        let (lru', removed) = delete key lru
         when (not . valid $ lru') $ throw "not valid"
 
         let pre = toList lru
             post = toList lru'
             projected = filter ((key /=) . fst) pre
-            shouldShorten = length projected /= length pre
+            expectedRemoval = Prelude.lookup key pre
 
-        when (present /= shouldShorten) $ throw "unexpected resulting bool"
+        when (removed /= expectedRemoval) $ throw "unexpected value removed"
         when (projected /= post) $ throw "unexpected resulting lru"
         return lru'
 
