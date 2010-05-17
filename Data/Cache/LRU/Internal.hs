@@ -241,7 +241,7 @@ delete' key lru cont' lv = if Map.null cont' then deleteOnly else deleteOne
 adjust' :: Ord k => (a -> a) -> k -> Map k a -> Map k a
 adjust' f k m = Map.insertWith' (\_ o -> f o) k undefined m
 
--- | Internal function.  This checks the three structural invariants
+-- | Internal function.  This checks the four structural invariants
 -- of the LRU cache structure:
 --
 -- 1. The cache's size does not exceed the specified max size.
@@ -249,10 +249,13 @@ adjust' f k m = Map.insertWith' (\_ o -> f o) k undefined m
 -- 2. The linked list through the nodes is consistent in both directions.
 --
 -- 3. The linked list contains the same number of nodes as the cache.
+--
+-- 4. Every key in the linked list is in the 'Map'.
 valid :: Ord key => LRU key val -> Bool
 valid lru = maybe True (size lru <=) (maxSize lru) &&
             reverse orderedKeys == reverseKeys &&
-            size lru == length orderedKeys
+            size lru == length orderedKeys &&
+            all (`Map.member` contents) orderedKeys            
     where contents = content lru
           orderedKeys = traverse next . first $ lru
           traverse _ Nothing = []
