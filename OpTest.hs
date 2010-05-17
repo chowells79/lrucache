@@ -36,7 +36,9 @@ instance Arbitrary (Action Int Int) where
 
     shrink = shrinkNothing
 
-newtype History key val = H (Maybe Int, [Action key val] -> [Action key val])
+newtype History key val = H ( Maybe Integer
+                            , [Action key val] -> [Action key val]
+                            )
 
 instance Arbitrary (History Int Int) where
     arbitrary = liftM2 (curry H) s h
@@ -64,7 +66,7 @@ execute (H (k, h)) = execute' (h []) (newLRU k)
             post = toList lru'
 
             naive = (key, val) : filter ((key /=) . fst) pre
-            sizeOk = maybe True (length naive <=) k
+            sizeOk = maybe True (fromIntegral (length naive) <=) k
             projected = if sizeOk then naive else init naive
         when (projected /= post) $ throw "unexpected result"
 

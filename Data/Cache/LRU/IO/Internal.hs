@@ -27,13 +27,13 @@ newtype AtomicLRU key val = C (MVar (LRU key val))
 
 -- | Make a new AtomicLRU that will not grow beyond the optional
 -- maximum size, if specified.
-newAtomicLRU :: Ord key => Maybe Int -- ^ the optional maximum size
+newAtomicLRU :: Ord key => Maybe Integer -- ^ the optional maximum size
              -> IO (AtomicLRU key val)
 newAtomicLRU = fmap C . MV.newMVar . LRU.newLRU
 
 -- | Build a new LRU from the optional maximum size and list of
 -- contents. See 'LRU.fromList' for the semantics.
-fromList :: Ord key => Maybe Int -- ^ the optional maximum size
+fromList :: Ord key => Maybe Integer -- ^ the optional maximum size
             -> [(key, val)] -> IO (AtomicLRU key val)
 fromList s l = fmap C . MV.newMVar $ LRU.fromList s l
 
@@ -42,7 +42,7 @@ fromList s l = fmap C . MV.newMVar $ LRU.fromList s l
 toList :: Ord key => AtomicLRU key val -> IO [(key, val)]
 toList (C mvar) = LRU.toList <$> MV.readMVar mvar
 
-maxSize :: AtomicLRU key val -> IO (Maybe Int)
+maxSize :: AtomicLRU key val -> IO (Maybe Integer)
 maxSize (C mvar) = LRU.maxSize <$> MV.readMVar mvar
 
 -- | Insert a key/value pair into an AtomicLRU.  See 'LRU.insert' for

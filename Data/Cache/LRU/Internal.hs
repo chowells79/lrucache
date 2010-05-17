@@ -19,7 +19,7 @@ import qualified Data.Map as Map
 data LRU key val = LRU {
       first :: !(Maybe key) -- ^ the key of the most recently accessed entry
     , last :: !(Maybe key) -- ^ the key of the least recently accessed entry
-    , maxSize :: !(Maybe Int) -- ^ the maximum size of the LRU cache
+    , maxSize :: !(Maybe Integer) -- ^ the maximum size of the LRU cache
     , content :: !(Map key (LinkedVal key val)) -- ^ the backing 'Map'
     } deriving Eq
 
@@ -37,14 +37,14 @@ data LinkedVal key val = Link {
 
 -- | Make an LRU.  If a size limit is specified, the LRU is guaranteed
 -- to not grow above the specified number of entries.
-newLRU :: (Ord key) => Maybe Int -- ^ the optional maximum size of the LRU
+newLRU :: (Ord key) => Maybe Integer -- ^ the optional maximum size of the LRU
        -> LRU key val
 newLRU (Just s) | s <= 0 = error "non-positive size LRU"
 newLRU s  = LRU Nothing Nothing s Map.empty
 
 -- | Build a new LRU from the given maximum size and list of contents,
 -- in order from most recently accessed to least recently accessed.
-fromList :: Ord key => Maybe Int -- ^ the optional maximum size of the LRU
+fromList :: Ord key => Maybe Integer -- ^ the optional maximum size of the LRU
          -> [(key, val)] -> LRU key val
 fromList s l = appendAll $ newLRU s
     where appendAll = foldr ins id l
@@ -73,7 +73,7 @@ insert :: Ord key => key -> val -> LRU key val -> LRU key val
 insert key val lru = maybe emptyCase nonEmptyCase $ first lru
     where
       contents = content lru
-      full = maybe False (Map.size contents ==) $ maxSize lru
+      full = maybe False (fromIntegral (Map.size contents) ==) $ maxSize lru
       present = key `Map.member` contents
 
       -- this is the case for adding to an empty LRU Cache
@@ -252,7 +252,7 @@ adjust' f k m = Map.insertWith' (\_ o -> f o) k undefined m
 --
 -- 4. Every key in the linked list is in the 'Map'.
 valid :: Ord key => LRU key val -> Bool
-valid lru = maybe True (size lru <=) (maxSize lru) &&
+valid lru = maybe True (fromIntegral (size lru) <=) (maxSize lru) &&
             reverse orderedKeys == reverseKeys &&
             size lru == length orderedKeys &&
             all (`Map.member` contents) orderedKeys            
