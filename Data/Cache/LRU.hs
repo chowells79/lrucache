@@ -2,7 +2,7 @@
 --
 -- This module provides a pure LRU cache based on a doubly-linked list
 -- through a Data.Map structure.  This gives O(log n) operations on
--- 'insert' and 'lookup', and O(n) for 'toList'.
+-- 'insert', 'lookup', 'delete', and 'pop', and O(n * log n) for 'toList'.
 --
 -- The interface this module provides is opaque.  If further control
 -- is desired, the "Data.Cache.LRU.Internal" module can be used.

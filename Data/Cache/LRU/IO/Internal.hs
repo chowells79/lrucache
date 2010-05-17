@@ -26,7 +26,7 @@ import qualified Data.Cache.LRU as LRU
 newtype AtomicLRU key val = C (MVar (LRU key val))
 
 -- | Make a new AtomicLRU that will not grow beyond the optional
--- maximum size.
+-- maximum size, if specified.
 newAtomicLRU :: Ord key => Maybe Int -- ^ the optional maximum size
              -> IO (AtomicLRU key val)
 newAtomicLRU = fmap C . MV.newMVar . LRU.newLRU
