@@ -1,4 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
+module OpTest where
+
 import qualified Prelude
 import Prelude hiding ( lookup, last )
 
