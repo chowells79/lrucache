@@ -255,7 +255,7 @@ valid :: Ord key => LRU key val -> Bool
 valid lru = maybe True (fromIntegral (size lru) <=) (maxSize lru) &&
             reverse orderedKeys == reverseKeys &&
             size lru == length orderedKeys &&
-            all (`Map.member` contents) orderedKeys            
+            all (`Map.member` contents) orderedKeys
     where contents = content lru
           orderedKeys = traverse next . first $ lru
           traverse _ Nothing = []
