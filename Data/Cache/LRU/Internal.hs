@@ -27,6 +27,9 @@ data LRU key val = LRU {
 instance (Ord key, Show key, Show val) => Show (LRU key val) where
     show lru = "fromList " ++ show (toList lru)
 
+instance Functor (LRU key) where
+    fmap f lru = lru { content = fmap (fmap f) . content $ lru }
+
 -- | The values stored in the Map of the LRU cache.  They embed a
 -- doubly-linked list through the values of the 'Map'.
 data LinkedVal key val = Link {
@@ -34,6 +37,9 @@ data LinkedVal key val = Link {
     , prev :: !(Maybe key) -- ^ the key of the value before this one
     , next :: !(Maybe key) -- ^ the key of the value after this one
     } deriving Eq
+
+instance Functor (LinkedVal key) where
+    fmap f lv = lv { value = f . value $ lv }
 
 -- | Make an LRU.  If a size limit is specified, the LRU is guaranteed
 -- to not grow above the specified number of entries.
