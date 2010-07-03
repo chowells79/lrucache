@@ -1,5 +1,5 @@
 Name:                lrucache
-Version:             1.0
+Version:             1.1
 Synopsis:            a simple, pure LRU cache
 License:             BSD3
 License-file:        LICENSE
@@ -18,6 +18,10 @@ Description:
         an LRU cache.
         .
         Version History:
+        .
+        1.1 - Add a Functor instance for LRUCache.
+              Add a generic modification modification function
+               for AtomicLRUCache.
         .
         1.0 - Breaking API changes:
                1) The newLRU smart constructor now makes the maximum
