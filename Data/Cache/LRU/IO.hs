@@ -21,6 +21,7 @@ module Data.Cache.LRU.IO
     , delete
     , pop
     , size
+    , modifyAtomicLRU
     )
 where
 

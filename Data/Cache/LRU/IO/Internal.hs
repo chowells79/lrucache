@@ -69,6 +69,13 @@ pop (C mvar) = modifyMVar' mvar $ return . LRU.pop
 size :: AtomicLRU key val -> IO Int
 size (C mvar) = LRU.size <$> MV.readMVar mvar
 
+-- | Given a function that takes an 'LRU.LRU' and returns one of the
+-- same type, use it to modify the contents of this AtomicLRU.
+modifyAtomicLRU :: (LRU.LRU key val -> LRU.LRU key val)
+                -> AtomicLRU key val
+                -> IO ()
+modifyAtomicLRU f (C mvar) = modifyMVar_' mvar (return . f)
+
 -- | A version of 'MV.modifyMVar_' that forces the result of the
 -- function application to WHNF.
 modifyMVar_' :: MVar a -> (a -> IO a) -> IO ()
