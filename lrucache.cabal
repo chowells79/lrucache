@@ -1,5 +1,5 @@
 Name:                lrucache
-Version:             1.1
+Version:             1.1.0.1
 Synopsis:            a simple, pure LRU cache
 License:             BSD3
 License-file:        LICENSE
@@ -18,6 +18,8 @@ Description:
         an LRU cache.
         .
         Version History:
+        .
+        1.1.0.1 - Update containers constraint to allow containers from ghc-7
         .
         1.1 - Add a Functor instance for LRUCache.
               Add a generic modification modification function
@@ -65,6 +67,6 @@ Library
 
   Build-depends:
         base >= 4 && < 5,
-        containers >= 0.2 && < 0.4
+        containers >= 0.2 && < 0.5
 
   GHC-options:  -Wall -O2
