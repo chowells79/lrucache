@@ -8,7 +8,7 @@ import Control.Applicative
 import Control.Monad
 import Control.Monad.Exception.Synchronous
 
-import Data.Cache.LRU.Internal
+import Data.Cache.LRU.Ordered
 
 import Test.QuickCheck
     ( Arbitrary(..)

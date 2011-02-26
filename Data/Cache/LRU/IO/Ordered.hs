@@ -9,7 +9,7 @@
 -- possible to put an 'AtomicLRU' into a bad state with this module.
 -- It is highly recommended that the external interface,
 -- "Data.Cache.LRU.IO", be used instead.
-module Data.Cache.LRU.IO.Internal where
+module Data.Cache.LRU.IO.Ordered where
 
 import Prelude hiding ( lookup, mod, take )
 

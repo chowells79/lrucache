@@ -8,7 +8,7 @@
 --
 -- If this degree of control isn't needed, consider using
 -- "Data.Cache.LRU" instead.
-module Data.Cache.LRU.Internal where
+module Data.Cache.LRU.Ordered where
 
 import Prelude hiding ( last, lookup )
 

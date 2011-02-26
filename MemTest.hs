@@ -4,7 +4,7 @@ import Control.Monad
 import Control.Concurrent
 import Data.IORef
 
-import Data.Cache.LRU.IO.Internal
+import Data.Cache.LRU.IO.Ordered
 
 main :: IO ()
 main = do
