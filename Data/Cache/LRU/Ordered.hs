@@ -121,8 +121,8 @@ lookup key lru = case Map.lookup key $ content lru of
                            Nothing -> (lru, Nothing)
                            Just lv -> (hit' key lru, Just . value $ lv)
 
--- | Remove an item from an LRU.  Returns the new LRU, and if the item
--- was present to be removed.
+-- | Remove an item from an LRU.  Returns the new LRU, and the value
+-- removed if the key was present.
 delete :: Ord key => key -> LRU key val -> (LRU key val, Maybe val)
 delete key lru = maybe (lru, Nothing) delete'' mLV
     where
