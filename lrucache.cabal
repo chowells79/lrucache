@@ -19,7 +19,7 @@ Description:
         .
         Version History:
         .
-        1.1.1 - Add a additional modification functions for AtomicLRUCache.
+        1.1.1 - Add an additional modification function for AtomicLRUCache.
         .
         1.1.0.1 - Update containers constraint to allow containers from ghc-7
         .

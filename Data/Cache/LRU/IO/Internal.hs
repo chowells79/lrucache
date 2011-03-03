@@ -74,7 +74,15 @@ size (C mvar) = LRU.size <$> MV.readMVar mvar
 modifyAtomicLRU :: (LRU.LRU key val -> LRU.LRU key val)
                 -> AtomicLRU key val
                 -> IO ()
-modifyAtomicLRU f (C mvar) = modifyMVar_' mvar (return . f)
+modifyAtomicLRU f = modifyAtomicLRU' $ return . f
+
+-- | Given a function that takes an 'LRU.LRU' and returns an IO action
+-- producting one of the same type, use it to modify the contents of
+-- this AtomicLRU.
+modifyAtomicLRU' :: (LRU.LRU key val -> IO (LRU.LRU key val))
+                 -> AtomicLRU key val
+                 -> IO ()
+modifyAtomicLRU' f (C mvar) = modifyMVar_' mvar f
 
 -- | A version of 'MV.modifyMVar_' that forces the result of the
 -- function application to WHNF.
