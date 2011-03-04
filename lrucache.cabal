@@ -19,11 +19,12 @@ Description:
         .
         Version History:
         .
+        1.1.1 - Add an additional modification function for AtomicLRUCache.
+        .
         1.1.0.1 - Update containers constraint to allow containers from ghc-7
         .
         1.1 - Add a Functor instance for LRUCache.
-              Add a generic modification modification function
-               for AtomicLRUCache.
+              Add a generic modification function for AtomicLRUCache.
         .
         1.0 - Breaking API changes:
                1) The newLRU smart constructor now makes the maximum

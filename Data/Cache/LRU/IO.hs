@@ -2,7 +2,8 @@
 -- | This module contains a mutable wrapping of an LRU in the IO
 -- monad, providing atomic access in a concurrent environment.  All
 -- calls preserve the same semantics as those in "Data.Cache.LRU", but
--- perform updates in place.
+-- perform updates in place.  All functions use a single atomic update
+-- of the backing structure.
 --
 -- The interface this module provides is opaque.  If further control
 -- is desired, the "Data.Cache.LRU.IO.Internal" module can be used in
@@ -23,6 +24,7 @@ module Data.Cache.LRU.IO
     , pop
     , size
     , modifyAtomicLRU
+    , modifyAtomicLRU'
     )
 where
 
