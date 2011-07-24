@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 -- | Implements an LRU cache.
 --
 -- This module provides a pure LRU cache based on a doubly-linked list
@@ -9,10 +8,16 @@
 -- is desired, the "Data.Cache.LRU.Internal" module can be used.
 module Data.Cache.LRU
     ( LRU
+    , UnlimitedLRU
+    , StrictLRU
+    , StrictUnlimitedLRU
     , newLRU
+    , newUnlimitedLRU
+    , newStrictLRU
+    , newStrictUnlimitedLRU
     , fromList
     , toList
-    , maxSize
+    , capacity
     , insert
     , lookup
     , delete
@@ -21,10 +26,7 @@ module Data.Cache.LRU
     )
 where
 
-import Prelude hiding ( lookup )
+import Prelude hiding (lookup)
 
-import Data.Cache.LRU.Ordered
-
-#ifdef UNORDERED
-import Data.Cache.LRU.Unordered
-#endif
+import Data.Cache.LRU.Internal
+import Data.Cache.LRU.Class

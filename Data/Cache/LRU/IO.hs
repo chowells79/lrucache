@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 -- | This module contains a mutable wrapping of an LRU in the IO
 -- monad, providing atomic access in a concurrent environment.  All
 -- calls preserve the same semantics as those in "Data.Cache.LRU", but
@@ -17,7 +16,7 @@ module Data.Cache.LRU.IO
     , newAtomicLRU
     , fromList
     , toList
-    , maxSize
+    , capacity
     , insert
     , lookup
     , delete
@@ -28,10 +27,6 @@ module Data.Cache.LRU.IO
     )
 where
 
-import Prelude hiding ( lookup )
+import Prelude hiding (lookup)
 
 import Data.Cache.LRU.IO.Ordered
-
-#ifdef UNORDERED
-import Data.Cache.LRU.IO.Unordered
-#endif
