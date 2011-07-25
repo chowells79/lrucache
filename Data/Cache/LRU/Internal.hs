@@ -13,6 +13,7 @@ import Data.Cache.LRU.Class
 
 import Prelude hiding (last, lookup, max)
 
+
 -- | Stores the information that makes up an LRU cache
 data LRUImpl store link cap key val =
     LRUImpl { first   :: !(Maybe key)
@@ -77,7 +78,7 @@ instance (Eq key, Store (store key (link key val)) key (link key val), Link (lin
             Just lv = sLookup key m
             keyval = (key, value lv)
 
-    capacity = max
+    capacity lru = max lru
 
     insert key val lru = maybe emptyCase nonEmptyCase $ first lru
       where
@@ -142,7 +143,7 @@ instance (Eq key, Store (store key (link key val)) key (link key val), Link (lin
         (lru', Just lastVal) = delete lastKey lru
         pair = (lastKey, lastVal)
 
-    size = sSize . content
+    size lru = sSize $ content lru
 
 
 -- | Internal function.  The key passed in must be present in the
@@ -238,7 +239,7 @@ delete' key lru cont lv = (res, if sNull cont then deleteOnly else deleteOne)
                     , max = max'
                     }
     contMid = sAdjust (setNext $ next lv ) pKey .
-              sAdjust (setNext $ prev lv ) nKey $
+              sAdjust (setPrev $ prev lv ) nKey $
               cont
 
 
@@ -252,14 +253,27 @@ delete' key lru cont lv = (res, if sNull cont then deleteOnly else deleteOne)
 -- 3. The linked list contains the same number of nodes as the cache.
 --
 -- 4. Every key in the linked list is in the 'store'.
--- valid :: () => LRUImpl store link cap key val -> Bool
--- valid lru = maybe True (fromIntegral (size lru) <=) (maxSize lru) &&
---             reverse orderedKeys == reverseKeys &&
---             size lru == length orderedKeys &&
---             all (`Map.member` contents) orderedKeys
---     where contents = content lru
---           orderedKeys = traverse next . first $ lru
---           traverse _ Nothing = []
---           traverse f (Just k) = let Just k' = Map.lookup k contents
---                                 in k : (traverse f . f $ k')
---           reverseKeys = traverse prev . last $ lru
+valid :: ( Capacity (cap key val) key val
+         , Store (store key (link key val)) key (link key val)
+         , Link (link key val) key val
+         , Eq key
+         , Eq (cap key val)
+         )
+      => LRUImpl store link cap key val -> Bool
+valid lru = capacityValid &&
+            reverse orderedKeys == reverseKeys &&
+            fromIntegral (size lru) == length orderedKeys &&
+            all (`sMember` contents) orderedKeys
+  where
+    capacityValid      = capacityGood && capacityConsistent
+    capacityGood       = Good == fst recalculatedPair
+    capacityConsistent = max lru == snd recalculatedPair
+    recalculatedPair = foldl (\(_,c) (k,v) -> cAdd k v c) (Good, emT) $ toList lru
+    emT = cEmpty $ max lru
+
+    contents = content lru
+    orderedKeys = traverse next . first $ lru
+    traverse _ Nothing = []
+    traverse f (Just k) = let Just k' = sLookup k contents
+                          in k : (traverse f . f $ k')
+    reverseKeys = traverse prev . last $ lru

@@ -25,6 +25,8 @@ instance Capacity (MaxEntries key val) key val where
       where
         dc = c - 1
 
+    cEmpty (MaxEntries _ m) = MaxEntries 0 m
+
 instance Functor (MaxEntries key) where
     fmap _ (MaxEntries c m) = MaxEntries c m
 
@@ -34,6 +36,7 @@ data Unlimited key val = Unlimited deriving (Show, Ord, Eq)
 instance Capacity (Unlimited key val) key val where
     cAdd _ _ _ = (Good, Unlimited)
     cRemove _ _ _ = (Good, Unlimited)
+    cEmpty _ = Unlimited
 
 instance Functor (Unlimited key) where
     fmap _ Unlimited = Unlimited

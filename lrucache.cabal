@@ -18,7 +18,7 @@ Description:
         an LRU cache.
         .
         Version History:
-        2.0 - Redo the entire interface
+        2.0 - Significant interface changes to increase generality
         .
         1.1.1 - Add an additional modification function for AtomicLRUCache.
         .

@@ -41,6 +41,7 @@ data CapacityResult = Good | Overflow deriving (Eq, Ord, Show, Enum)
 class Capacity cap key val | cap -> key, cap -> val where
     cAdd :: key -> val -> cap -> (CapacityResult, cap)
     cRemove :: key -> val -> cap -> (CapacityResult, cap)
+    cEmpty :: cap -> cap
 
 
 -- | this class provides a generalized LRU interface
