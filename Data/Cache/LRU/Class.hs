@@ -29,8 +29,10 @@ class Store store key val | store -> key, store -> val where
     sSize :: store -> Integer
     sMember :: key -> store -> Bool
     sInsert :: key -> val -> store -> store
-    sDelete :: key -> store -> (Maybe val, store)
+    sDelete :: key -> store -> (store, Maybe val)
     sAdjust :: (val -> val) -> key -> store -> store
+    sAdjust f k = fst . sAdjust' f k
+    sAdjust' :: (val -> val) -> key -> store -> (store, Maybe val)
 
 
 -- | this data type represents the result of a Capacity calculation
@@ -39,8 +41,8 @@ data CapacityResult = Good | Overflow deriving (Eq, Ord, Show, Enum)
 
 -- | this class provides an interface to abstract out capacity operations
 class Capacity cap key val | cap -> key, cap -> val where
-    cAdd :: key -> val -> cap -> (CapacityResult, cap)
-    cRemove :: key -> val -> cap -> (CapacityResult, cap)
+    cAdd :: key -> val -> cap -> (cap, CapacityResult)
+    cRemove :: key -> val -> cap -> (cap, CapacityResult)
     cEmpty :: cap -> cap
 
 
@@ -50,7 +52,7 @@ class LRUInterface lru cap key val | lru -> cap, lru -> key, lru -> val where
     fromList :: cap -> [(key, val)] -> lru
     toList :: lru -> [(key, val)]
     capacity :: lru -> cap
-    insert :: key -> val -> lru -> lru
+    insert :: key -> val -> lru -> (lru, [(key, val)])
     lookup :: key -> lru -> (lru, Maybe val)
     delete :: key -> lru -> (lru, Maybe val)
     pop :: lru -> (lru, Maybe (key, val))

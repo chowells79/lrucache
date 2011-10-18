@@ -97,14 +97,46 @@ execute (H (k, h)) = execute' (h []) (newLRU k)
         when (projected /= post) $ throw "unexpected resulting lru"
         return lru'
 
-    executeA (Insert key val) lru = execA' key val lru $ insert key val lru
+    executeA (Insert key val) lru = do
+        let (lru', spilled) = insert key val lru
+        when (not . valid $ lru') $ throw "not valid"
+
+        let pre = toList lru
+            post = toList lru'
+
+            naive = (key, val) : filter ((key /=) . fst) pre
+            sizeOk = fromIntegral (length naive) <= k
+            projected = if sizeOk then naive else init naive
+
+            projectedSpill = if sizeOk
+                             then []
+                             else if key == fst (Prelude.last pre)
+                                  then [Prelude.last $ init pre]
+                                  else [Prelude.last pre]
+
+        when (projected /= post) $ throw "unexpected insert result"
+        when (projectedSpill /= spilled) $ throw "unexpected spill"
+
+        return lru'
 
     executeA (Lookup key) lru = case mVal of
         Nothing -> checkSame
-        Just val -> execA' key val lru lru'
+        Just val ->  do
+            when (not . valid $ lru') $ throw "not valid"
+
+            let pre = toList lru
+                post = toList lru'
+
+                naive = (key, val) : filter ((key /=) . fst) pre
+                sizeOk = fromIntegral (length naive) <= k
+                projected = if sizeOk then naive else init naive
+            when (projected /= post) $ throw "unexpected result"
+
+            return lru'
       where
         (lru', mVal) = lookup key lru
-        checkSame = do when (toList lru /= toList lru') $ throw "unexpected result"
+        checkSame = do when (toList lru /= toList lru') $
+                           throw "unexpected result"
                        return lru'
 
     executeA Pop lru = do

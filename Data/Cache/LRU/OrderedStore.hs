@@ -5,6 +5,8 @@
 -- |
 module Data.Cache.LRU.OrderedStore where
 
+import           Control.Arrow
+
 import           Data.Cache.LRU.Class
 import qualified Data.Map as Map
 import           Data.Foldable (Foldable)
@@ -21,5 +23,9 @@ instance Ord key => Store (OrderedStore key val) key val where
     sSize = fromIntegral . Map.size . unOS
     sMember k = Map.member k . unOS
     sInsert k v = OS . Map.insert k v . unOS
-    sDelete k = fmap OS . Map.updateLookupWithKey (\_ _ -> Nothing) k . unOS
-    sAdjust f k = OS . Map.insertWith' (\_ o -> f o) k undefined . unOS
+    sDelete k (OS m) = (OS m', k')
+      where
+        (k', m') = Map.updateLookupWithKey (\_ _ -> Nothing) k m
+    sAdjust' f k (OS m) = (OS m', k')
+      where
+        (k', m') = Map.insertLookupWithKey' (\_ _ o -> f o) k undefined m

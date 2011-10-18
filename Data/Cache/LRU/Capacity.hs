@@ -13,14 +13,14 @@ maxEntries :: Integer -> MaxEntries key val
 maxEntries = MaxEntries 0
 
 instance Capacity (MaxEntries key val) key val where
-    cAdd _ _ (MaxEntries c m) = ( if ic <= m then Good else Overflow
-                                , MaxEntries ic m
+    cAdd _ _ (MaxEntries c m) = ( MaxEntries ic m
+                                , if ic <= m then Good else Overflow
                                 )
       where
         ic = c + 1
 
-    cRemove _ _ (MaxEntries c m) =  ( if dc <= m then Good else Overflow
-                                    , MaxEntries dc m
+    cRemove _ _ (MaxEntries c m) =  ( MaxEntries dc m
+                                    , if dc <= m then Good else Overflow
                                     )
       where
         dc = c - 1
@@ -34,8 +34,8 @@ instance Functor (MaxEntries key) where
 data Unlimited key val = Unlimited deriving (Show, Ord, Eq)
 
 instance Capacity (Unlimited key val) key val where
-    cAdd _ _ _ = (Good, Unlimited)
-    cRemove _ _ _ = (Good, Unlimited)
+    cAdd _ _ _ = (Unlimited, Good)
+    cRemove _ _ _ = (Unlimited, Good)
     cEmpty _ = Unlimited
 
 instance Functor (Unlimited key) where

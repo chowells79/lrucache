@@ -14,9 +14,7 @@
 module Data.Cache.LRU.IO
     ( AtomicLRU
     , newAtomicLRU
-    , fromList
     , toList
-    , capacity
     , insert
     , lookup
     , delete
