@@ -84,92 +84,147 @@ instance (Functor (store key), Functor (link key)) =>
     Functor (LRUImpl store link Unlimited key) where fmap = unsafeFmap
 
 
-instance ( Eq key
-         , Store (store key (link key val)) key (link key val)
-         , Link (link key val) key val, Capacity (cap key val) key val
-         ) =>
-    LRUInterface (LRUImpl store link cap key val) (cap key val) key val where
+emptyLRU :: (Store (store key (link key val)) key (link key val))
+         => cap key val
+         -> LRUImpl store link cap key val
+emptyLRU cap = LRUImpl Nothing Nothing cap sEmpty
 
-    emptyLRU cap = LRUImpl Nothing Nothing cap sEmpty
 
-    fromList cap l = appendAll $ emptyLRU cap
+fromList :: ( Eq key
+            , Store (store key (link key val)) key (link key val)
+            , Link (link key val) key val
+            , Capacity (cap key val) key val
+            )
+         => cap key val
+         -> [(key, val)]
+         -> LRUImpl store link cap key val
+fromList cap l = appendAll $ emptyLRU cap
+   where
+     appendAll = foldr ins id l
+     ins (k, v) = ((fst . insert k v) .)
+
+
+toList :: ( Eq key
+          , Store (store key (link key val)) key (link key val)
+          , Link (link key val) key val
+          , Capacity (cap key val) key val
+          )
+       => LRUImpl store link cap key val
+       -> [(key, val)]
+toList lru = maybe [] (listLinks . content $ lru) $ first lru
+  where
+    listLinks m key = case next lv of
+        Nothing -> [keyval]
+        Just nk -> keyval : listLinks m nk
       where
-        appendAll = foldr ins id l
-        ins (k, v) = ((fst . insert k v) .)
+        Just lv = sLookup key m
+        keyval = (key, value lv)
 
-    toList lru = maybe [] (listLinks . content $ lru) $ first lru
+
+capacity :: LRUImpl store link cap key val -> cap key val
+capacity lru = max lru
+
+
+insert :: ( Eq key
+          , Store (store key (link key val)) key (link key val)
+          , Link (link key val) key val
+          , Capacity (cap key val) key val
+          )
+       => key
+       -> val
+       -> LRUImpl store link cap key val
+       -> (LRUImpl store link cap key val, [(key, val)])
+insert key val lru = maybe emptyCase nonEmptyCase $ first lru
+  where
+    (max', res) = cAdd key val $ max lru
+
+    -- this is the case for adding to an empty LRU Cache
+    emptyCase = case res of
+        Good -> (LRUImpl fl fl max' m', [])
+        Overflow -> (lru, [(key, val)])
       where
-        listLinks m key = case next lv of
-            Nothing -> [keyval]
-            Just nk -> keyval : listLinks m nk
-          where
-            Just lv = sLookup key m
-            keyval = (key, value lv)
+        fl = Just key
+        lv = newLink val Nothing Nothing
+        m' = sInsert key lv contents
 
-    capacity lru = max lru
+    -- this is the case for when the LRU Cache isn't empty
+    contents = content lru
+    present = key `sMember` contents
 
-    insert key val lru = maybe emptyCase nonEmptyCase $ first lru
+    nonEmptyCase firstKey = if present then hitSet else add firstKey
+
+    -- this updates the value stored with the key, marks it as the
+    -- most recently accessed, checks whether the new value
+    -- overflows, and cleans it up if it overflowed
+    hitSet = case r of
+        Good -> (hit' key lru', [])
+        Overflow -> iterDel' lru'
       where
-        (max', res) = cAdd key val $ max lru
+        (m, r) = cAdd key val . fst . cRemove key oldVal $ max lru
+        lru' = lru { content = contents', max = m }
+        (contents', Just oldLink) = sAdjust' (setValue val) key contents
+        oldVal = value oldLink
 
-        -- this is the case for adding to an empty LRU Cache
-        emptyCase = case res of
-            Good -> (LRUImpl fl fl max' m', [])
-            Overflow -> (lru, [(key, val)])
-          where
-            fl = Just key
-            lv = newLink val Nothing Nothing
-            m' = sInsert key lv contents
-
-        -- this is the case for when the LRU Cache isn't empty
-        contents = content lru
-        present = key `sMember` contents
-
-        nonEmptyCase firstKey = if present then hitSet else add firstKey
-
-        -- this updates the value stored with the key, marks it as the
-        -- most recently accessed, checks whether the new value
-        -- overflows, and cleans it up if it overflowed
-        hitSet = case r of
-            Good -> (hit' key lru', [])
-            Overflow -> iterDel' lru'
-          where
-            (m, r) = cAdd key val . fst . cRemove key oldVal $ max lru
-            lru' = lru { content = contents', max = m }
-            (contents', Just oldLink) = sAdjust' (setValue val) key contents
-            oldVal = value oldLink
-
-        -- create a new LRU with a new first item, and
-        -- conditionally dropping items from the end
-        add firstKey = case res of
-            Good -> (lru', [])
-            Overflow -> iterDel' lru'
-          where
-            -- add a new first item
-            firstLV' = newLink val Nothing $ Just firstKey
-            contents' = sInsert key firstLV' .
-                        sAdjust (setPrev $ Just key) firstKey $
-                        contents
-            lru' = lru { first = Just key
-                       , content = contents'
-                       , max = max' }
-
-    lookup key lru = case sLookup key $ content lru of
-        Nothing -> (lru, Nothing)
-        Just lv -> (hit' key lru, Just . value $ lv)
-
-    delete key lru = maybe (lru, Nothing) delete'' mLV
+    -- create a new LRU with a new first item, and
+    -- conditionally dropping items from the end
+    add firstKey = case res of
+        Good -> (lru', [])
+        Overflow -> iterDel' lru'
       where
-        delete'' lv = (fst $ delete' key lru cont' lv, Just $ value lv)
-        (cont', mLV) = sDelete key $ content lru
+        -- add a new first item
+        firstLV' = newLink val Nothing $ Just firstKey
+        contents' = sInsert key firstLV' .
+                    sAdjust (setPrev $ Just key) firstKey $
+                    contents
+        lru' = lru { first = Just key
+                   , content = contents'
+                   , max = max' }
 
-    pop lru = if size lru == 0 then (lru, Nothing) else (lru', Just pair)
-      where
-        Just lastKey = last lru
-        (lru', Just lastVal) = delete lastKey lru
-        pair = (lastKey, lastVal)
 
-    size lru = sSize $ content lru
+lookup :: ( Eq key
+          , Store (store key (link key val)) key (link key val)
+          , Link (link key val) key val
+          )
+       => key
+       -> LRUImpl store link cap key val
+       -> (LRUImpl store link cap key val, Maybe val)
+lookup key lru = case sLookup key $ content lru of
+    Nothing -> (lru, Nothing)
+    Just lv -> (hit' key lru, Just . value $ lv)
+
+
+delete :: ( Eq key
+          , Store (store key (link key val)) key (link key val)
+          , Link (link key val) key val
+          , Capacity (cap key val) key val
+          )
+       => key
+       -> LRUImpl store link cap key val
+       -> (LRUImpl store link cap key val, Maybe val)
+delete key lru = maybe (lru, Nothing) delete'' mLV
+  where
+    delete'' lv = (fst $ delete' key lru cont' lv, Just $ value lv)
+    (cont', mLV) = sDelete key $ content lru
+
+
+pop :: ( Eq key
+       , Store (store key (link key val)) key (link key val)
+       , Link (link key val) key val
+       , Capacity (cap key val) key val
+       )
+    => LRUImpl store link cap key val
+    -> (LRUImpl store link cap key val, Maybe (key, val))
+pop lru = if size lru == 0 then (lru, Nothing) else (lru', Just pair)
+  where
+    Just lastKey = last lru
+    (lru', Just lastVal) = delete lastKey lru
+    pair = (lastKey, lastVal)
+
+
+size :: (Store (store key (link key val)) key (link key val))
+     => LRUImpl store link cap key val
+     -> Integer
+size lru = sSize $ content lru
 
 
 -- | Internal function.  Deletes at least one item from the end,

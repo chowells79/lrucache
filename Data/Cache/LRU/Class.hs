@@ -44,16 +44,3 @@ class Capacity cap key val | cap -> key, cap -> val where
     cAdd :: key -> val -> cap -> (cap, CapacityResult)
     cRemove :: key -> val -> cap -> (cap, CapacityResult)
     cEmpty :: cap -> cap
-
-
--- | this class provides a generalized LRU interface
-class LRUInterface lru cap key val | lru -> cap, lru -> key, lru -> val where
-    emptyLRU :: cap -> lru
-    fromList :: cap -> [(key, val)] -> lru
-    toList :: lru -> [(key, val)]
-    capacity :: lru -> cap
-    insert :: key -> val -> lru -> (lru, [(key, val)])
-    lookup :: key -> lru -> (lru, Maybe val)
-    delete :: key -> lru -> (lru, Maybe val)
-    pop :: lru -> (lru, Maybe (key, val))
-    size :: lru -> Integer
