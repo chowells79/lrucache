@@ -5,9 +5,6 @@
 -- |
 module Data.Cache.LRU.Class where
 
-import Prelude hiding ( last, lookup )
-
-
 -- | This class abstracts the necessary functions for working with
 -- different internal representations of the linked values
 class Link link key val | link -> key, link -> val where
