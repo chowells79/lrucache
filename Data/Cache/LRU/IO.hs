@@ -13,7 +13,13 @@
 -- calls alter the head of the access list.)
 module Data.Cache.LRU.IO
     ( AtomicLRU
+    , AtomicUnlimitedLRU
+    , AtomicStrictLRU
+    , AtomicStrictUnlimitedLRU
     , newAtomicLRU
+    , newAtomicUnlimitedLRU
+    , newAtomicStrictLRU
+    , newAtomicStrictUnlimitedLRU
     , toList
     , insert
     , lookup
@@ -27,4 +33,4 @@ where
 
 import Prelude hiding (lookup)
 
-import Data.Cache.LRU.IO.Ordered
+import Data.Cache.LRU.IO.Internal

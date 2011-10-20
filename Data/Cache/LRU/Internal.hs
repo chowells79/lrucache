@@ -28,26 +28,26 @@ data LRUImpl store link cap key val =
 type LRU key val = LRUImpl OrderedStore NonStrict MaxEntries key val
 
 newLRU :: Ord key => Integer -> LRU key val
-newLRU = emptyLRU . maxEntries
+newLRU = emptyLRUImpl . maxEntries
 
 
 type UnlimitedLRU key val = LRUImpl OrderedStore NonStrict Unlimited key val
 
 newUnlimitedLRU :: Ord key => UnlimitedLRU key val
-newUnlimitedLRU = emptyLRU Unlimited
+newUnlimitedLRU = emptyLRUImpl Unlimited
 
 
 type StrictLRU key val = LRUImpl OrderedStore WHNFStrict MaxEntries key val
 
 newStrictLRU :: Ord key => Integer -> StrictLRU key val
-newStrictLRU = emptyLRU . maxEntries
+newStrictLRU = emptyLRUImpl . maxEntries
 
 
 type StrictUnlimitedLRU key val =
     LRUImpl OrderedStore WHNFStrict Unlimited key val
 
 newStrictUnlimitedLRU :: Ord key => StrictUnlimitedLRU key val
-newStrictUnlimitedLRU = emptyLRU Unlimited
+newStrictUnlimitedLRU = emptyLRUImpl Unlimited
 
 
 deriving instance ( Eq key
@@ -84,10 +84,10 @@ instance (Functor (store key), Functor (link key)) =>
     Functor (LRUImpl store link Unlimited key) where fmap = unsafeFmap
 
 
-emptyLRU :: (Store (store key (link key val)) key (link key val))
-         => cap key val
-         -> LRUImpl store link cap key val
-emptyLRU cap = LRUImpl Nothing Nothing cap sEmpty
+emptyLRUImpl :: (Store (store key (link key val)) key (link key val))
+             => cap key val
+             -> LRUImpl store link cap key val
+emptyLRUImpl cap = LRUImpl Nothing Nothing cap sEmpty
 
 
 fromList :: ( Eq key
@@ -98,7 +98,7 @@ fromList :: ( Eq key
          => cap key val
          -> [(key, val)]
          -> LRUImpl store link cap key val
-fromList cap l = appendAll $ emptyLRU cap
+fromList cap l = appendAll $ emptyLRUImpl cap
    where
      appendAll = foldr ins id l
      ins (k, v) = ((fst . insert k v) .)
