@@ -19,7 +19,7 @@ massInsertList :: [(Int, Int)]
 massInsertList = take 10000 $ zip keys vals
   where
     keys = randomRs (1, 150) $ mkStdGen 80
-    vals = randomRs (1000, 10000) $ mkStdGen 433
+    vals = randomRs (1000, 10000) $ mkStdGen 443
 
 
 massInsertFunction :: [(Int, Int)] -> LRU Int Int
