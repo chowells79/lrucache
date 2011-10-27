@@ -7,10 +7,11 @@ module Data.Cache.LRU.Capacity where
 import Data.Cache.LRU.Class
 
 
-data MaxEntries key val = MaxEntries Integer Integer deriving (Show, Ord, Eq)
+data MaxEntries key val = MaxEntries {-# UNPACK #-} !Int {-# UNPACK #-} !Int
+                          deriving (Show, Ord, Eq)
 
 maxEntries :: Integer -> MaxEntries key val
-maxEntries = MaxEntries 0
+maxEntries = MaxEntries 0 . fromInteger
 
 instance Capacity (MaxEntries key val) key val where
     cAdd _ _ (MaxEntries c m) = ( MaxEntries ic m

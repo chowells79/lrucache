@@ -27,18 +27,21 @@ data LRUImpl store link cap key val =
 
 type LRU key val = LRUImpl OrderedStore NonStrict MaxEntries key val
 
+{-# INLINEABLE newLRU #-}
 newLRU :: Ord key => Integer -> LRU key val
 newLRU = emptyLRUImpl . maxEntries
 
 
 type UnlimitedLRU key val = LRUImpl OrderedStore NonStrict Unlimited key val
 
+{-# INLINEABLE newUnlimitedLRU #-}
 newUnlimitedLRU :: Ord key => UnlimitedLRU key val
 newUnlimitedLRU = emptyLRUImpl Unlimited
 
 
 type StrictLRU key val = LRUImpl OrderedStore WHNFStrict MaxEntries key val
 
+{-# INLINEABLE newStrictLRU #-}
 newStrictLRU :: Ord key => Integer -> StrictLRU key val
 newStrictLRU = emptyLRUImpl . maxEntries
 
@@ -46,6 +49,7 @@ newStrictLRU = emptyLRUImpl . maxEntries
 type StrictUnlimitedLRU key val =
     LRUImpl OrderedStore WHNFStrict Unlimited key val
 
+{-# INLINEABLE newStrictUnlimitedLRU #-}
 newStrictUnlimitedLRU :: Ord key => StrictUnlimitedLRU key val
 newStrictUnlimitedLRU = emptyLRUImpl Unlimited
 
@@ -68,6 +72,7 @@ instance ( Eq key
     show l = "fromList (" ++ show (max l) ++ ") " ++ show (toList l)
 
 
+{-# INLINEABLE unsafeFmap #-}
 unsafeFmap :: ( Functor (store key)
               , Functor (link key)
               , Functor (cap key)
@@ -84,12 +89,14 @@ instance (Functor (store key), Functor (link key)) =>
     Functor (LRUImpl store link Unlimited key) where fmap = unsafeFmap
 
 
+{-# INLINEABLE emptyLRUImpl #-}
 emptyLRUImpl :: (Store (store key (link key val)) key (link key val))
              => cap key val
              -> LRUImpl store link cap key val
 emptyLRUImpl cap = LRUImpl Nothing Nothing cap sEmpty
 
 
+{-# INLINEABLE fromList #-}
 fromList :: ( Eq key
             , Store (store key (link key val)) key (link key val)
             , Link (link key val) key val
@@ -104,6 +111,7 @@ fromList cap l = appendAll $ emptyLRUImpl cap
      ins (k, v) = ((fst . insert k v) .)
 
 
+{-# INLINEABLE toList #-}
 toList :: ( Eq key
           , Store (store key (link key val)) key (link key val)
           , Link (link key val) key val
@@ -121,10 +129,12 @@ toList lru = maybe [] (listLinks . content $ lru) $ first lru
         keyval = (key, value lv)
 
 
+{-# INLINEABLE capacity #-}
 capacity :: LRUImpl store link cap key val -> cap key val
 capacity lru = max lru
 
 
+{-# INLINEABLE insert #-}
 insert :: ( Eq key
           , Store (store key (link key val)) key (link key val)
           , Link (link key val) key val
@@ -181,6 +191,7 @@ insert key val lru = maybe emptyCase nonEmptyCase $ first lru
                    , max = max' }
 
 
+{-# INLINEABLE lookup #-}
 lookup :: ( Eq key
           , Store (store key (link key val)) key (link key val)
           , Link (link key val) key val
@@ -193,6 +204,7 @@ lookup key lru = case sLookup key $ content lru of
     Just lv -> (hit' key lru, Just . value $ lv)
 
 
+{-# INLINEABLE delete #-}
 delete :: ( Eq key
           , Store (store key (link key val)) key (link key val)
           , Link (link key val) key val
@@ -207,6 +219,7 @@ delete key lru = maybe (lru, Nothing) delete'' mLV
     (cont', mLV) = sDelete key $ content lru
 
 
+{-# INLINEABLE pop #-}
 pop :: ( Eq key
        , Store (store key (link key val)) key (link key val)
        , Link (link key val) key val
@@ -221,6 +234,7 @@ pop lru = if size lru == 0 then (lru, Nothing) else (lru', Just pair)
     pair = (lastKey, lastVal)
 
 
+{-# INLINEABLE size #-}
 size :: (Store (store key (link key val)) key (link key val))
      => LRUImpl store link cap key val
      -> Integer
@@ -231,6 +245,7 @@ size lru = sSize $ content lru
 -- continues until the capacity is Good.  *NOT* idempotent.  Returns
 -- the items deleted as its second argument, ordered from most
 -- recently used to least recently used.
+{-# INLINEABLE iterDel' #-}
 iterDel' :: ( Eq key
             , Capacity (cap key val) key val
             , Store (store key (link key val)) key (link key val)
@@ -251,6 +266,7 @@ iterDel' lru = case res' of
 -- | Internal function.  The key passed in must be present in the
 -- LRU.  Moves the item associated with that key to the most
 -- recently accessed position.
+{-# INLINEABLE hit' #-}
 hit' :: ( Eq key
         , Store (store key (link key val)) key (link key val)
         , Link (link key val) key val
@@ -298,6 +314,7 @@ hit' key lru = if key == firstKey then lru else notFirst
 -- As this is intended to be an internal function, the arguments were
 -- chosen to avoid repeated computation, rather than for simplicity of
 -- calling this function.
+{-# INLINEABLE delete' #-}
 delete' :: ( Eq key
            , Capacity (cap key val) key val
            , Link (link key val) key val
