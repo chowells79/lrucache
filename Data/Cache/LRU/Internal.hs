@@ -20,17 +20,17 @@ import Data.Cache.LRU.Link
 import Data.Cache.LRU.Capacity
 import Data.Cache.LRU.Class
 
-import Prelude hiding (last, lookup, max)
+import Prelude hiding (last, lookup)
 
 
 -- | Stores the information that makes up an LRU cache.  This is
 -- parameterized in the type of the store, the link structure, and the
 -- capacity calculation types, as well as the key and value types.
 data LRUImpl store link cap key val =
-    LRUImpl { first   :: !(Maybe key)
-            , last    :: !(Maybe key)
-            , max     :: !(cap key val)
-            , content :: !(store key (link key val))
+    LRUImpl { first    :: !(Maybe key)
+            , last     :: !(Maybe key)
+            , capacity :: !(cap key val)
+            , content  :: !(store key (link key val))
             }
 
 
@@ -82,7 +82,7 @@ instance ( Eq key
          , Store (store key (link key val)) key (link key val)
          , Link (link key val) key val
          ) => Eq (LRUImpl store link cap key val) where
-    lru1 == lru2 = toList lru1 == toList lru2 && max lru1 == max lru2
+    lru1 == lru2 = toList lru1 == toList lru2 && capacity lru1 == capacity lru2
 
 
 instance ( Eq key
@@ -93,7 +93,7 @@ instance ( Eq key
          , Show val
          , Show (cap key val)
          ) => Show (LRUImpl store link cap key val) where
-    show l = "fromList (" ++ show (max l) ++ ") " ++ show (toList l)
+    show l = "fromList (" ++ show (capacity l) ++ ") " ++ show (toList l)
 
 
 -- | performs the 'fmap' operation on an 'LRUImpl'.  It's called out
@@ -118,21 +118,27 @@ instance (Functor (store key), Functor (link key)) =>
     Functor (LRUImpl store link Unlimited key) where fmap = unsafeFmap
 
 
+-- | create a new 'LRUImpl' value
 {-# INLINEABLE emptyLRUImpl #-}
-emptyLRUImpl :: (Store (store key (link key val)) key (link key val))
-             => cap key val
+emptyLRUImpl :: ( Store (store key (link key val)) key (link key val)
+                , Capacity (cap key val) key val
+                )
+             => cap key val -- ^ The capacity of the new 'LRUImpl'
              -> LRUImpl store link cap key val
-emptyLRUImpl cap = LRUImpl Nothing Nothing cap sEmpty
+emptyLRUImpl cap = LRUImpl Nothing Nothing (cEmpty cap) sEmpty
 
 
+-- | Build a new 'LRUImpl' from the given capacity and list of
+-- contents, in order from most recently accessed to least recently
+-- accessed.
 {-# INLINEABLE fromList #-}
 fromList :: ( Eq key
             , Store (store key (link key val)) key (link key val)
             , Link (link key val) key val
             , Capacity (cap key val) key val
             )
-         => cap key val
-         -> [(key, val)]
+         => cap key val -- ^ The capacity of the new 'LRUImpl'
+         -> [(key, val)] -- ^ The list of contents
          -> LRUImpl store link cap key val
 fromList cap l = appendAll $ emptyLRUImpl cap
    where
@@ -160,11 +166,6 @@ toList lru = maybe [] (listLinks . content $ lru) $ first lru
         keyval = (key, value lv)
 
 
-{-# INLINEABLE capacity #-}
-capacity :: LRUImpl store link cap key val -> cap key val
-capacity lru = max lru
-
-
 -- | Add an item to an LRU.  If the key was already present in the
 -- LRU, the value is changed to the new value passed in.  The
 -- item added is marked as the most recently accessed item in the
@@ -186,7 +187,7 @@ insert :: ( Eq key
        -> (LRUImpl store link cap key val, [(key, val)])
 insert key val lru = maybe emptyCase nonEmptyCase $ first lru
   where
-    (max', res) = cAdd key val $ max lru
+    (max', res) = cAdd key val $ capacity lru
 
     -- this is the case for adding to an empty LRU Cache
     emptyCase = case res of
@@ -210,8 +211,8 @@ insert key val lru = maybe emptyCase nonEmptyCase $ first lru
         Good -> (hit' key lru', [])
         Overflow -> iterDel' lru'
       where
-        (m, r) = cAdd key val . fst . cRemove key oldVal $ max lru
-        lru' = lru { content = contents', max = m }
+        (m, r) = cAdd key val . fst . cRemove key oldVal $ capacity lru
+        lru' = lru { content = contents', capacity = m }
         (contents', Just oldLink) = sAdjust' (setValue val) key contents
         oldVal = value oldLink
 
@@ -228,7 +229,7 @@ insert key val lru = maybe emptyCase nonEmptyCase $ first lru
                     contents
         lru' = lru { first = Just key
                    , content = contents'
-                   , max = max' }
+                   , capacity = max' }
 
 
 {-# INLINEABLE lookup #-}
@@ -375,7 +376,7 @@ delete' :: ( Eq key
         -> (LRUImpl store link cap key val, CapacityResult)
 delete' key lru cont lv = (if sNull cont then deleteOnly else deleteOne, res)
   where
-    (max', res) = cRemove key (value lv) (max lru)
+    (max', res) = cRemove key (value lv) (capacity lru)
 
     -- delete the only item in the cache
     deleteOnly = LRUImpl Nothing Nothing max' cont
@@ -387,7 +388,7 @@ delete' key lru cont lv = (if sNull cont then deleteOnly else deleteOne, res)
     -- delete the first item
     deleteFirst = lru { first = next lv
                       , content = contFirst
-                      , max = max'
+                      , capacity = max'
                       }
     Just nKey = next lv
     contFirst = sAdjust (setPrev Nothing) nKey cont
@@ -399,14 +400,14 @@ delete' key lru cont lv = (if sNull cont then deleteOnly else deleteOne, res)
     -- delete the last item
     deleteLast = lru { last = prev lv
                      , content = contLast
-                     , max = max'
+                     , capacity = max'
                      }
     Just pKey = prev lv
     contLast = sAdjust (setNext Nothing) pKey cont
 
     -- delete an item in the middle
     deleteMid = lru { content = contMid
-                    , max = max'
+                    , capacity = max'
                     }
     contMid = sAdjust (setNext $ next lv ) pKey .
               sAdjust (setPrev $ prev lv ) nKey $
@@ -436,10 +437,10 @@ valid lru = capacityGood && capacityConsistent &&
             all (`sMember` contents) orderedKeys
   where
     capacityGood = Good == snd recalculatedPair
-    capacityConsistent = max lru == fst recalculatedPair
+    capacityConsistent = capacity lru == fst recalculatedPair
     recalculatedPair = foldl combine (emT, Good) $ toList lru
     combine (c, _) (k, v) = cAdd k v c
-    emT = cEmpty $ max lru
+    emT = cEmpty $ capacity lru
 
     contents = content lru
     traverse _ Nothing = []

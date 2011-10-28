@@ -5,8 +5,6 @@
 -- |
 module Data.Cache.LRU.OrderedStore where
 
-import           Control.Arrow
-
 import           Data.Cache.LRU.Class
 import qualified Data.Map as Map
 import           Data.Foldable (Foldable)

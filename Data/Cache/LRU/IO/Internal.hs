@@ -63,7 +63,9 @@ newAtomicStrictUnlimitedLRU = emptyAtomicLRUImpl Unlimited
 
 -- | Make a new AtomicLRU that will not grow beyond the optional
 -- maximum size, if specified.
-emptyAtomicLRUImpl :: (Store (store key (link key val)) key (link key val))
+emptyAtomicLRUImpl :: ( Store (store key (link key val)) key (link key val)
+                      , Capacity (cap key val) key val
+                      )
                    => cap key val
                    -> IO (AtomicLRUImpl store link cap key val)
 emptyAtomicLRUImpl = fmap C . MV.newMVar . LRU.emptyLRUImpl
