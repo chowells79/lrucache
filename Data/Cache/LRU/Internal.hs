@@ -54,11 +54,14 @@ newStrictUnlimitedLRU :: Ord key => StrictUnlimitedLRU key val
 newStrictUnlimitedLRU = emptyLRUImpl Unlimited
 
 
-deriving instance ( Eq key
-                  , Eq (cap key val)
-                  , Eq val
-                  , Eq (store key (link key val))
-                  ) => Eq (LRUImpl store link cap key val)
+instance ( Eq key
+         , Eq (cap key val)
+         , Eq val
+         , Capacity (cap key val) key val
+         , Store (store key (link key val)) key (link key val)
+         , Link (link key val) key val
+         ) => Eq (LRUImpl store link cap key val) where
+    lru1 == lru2 = toList lru1 == toList lru2 && max lru1 == max lru2
 
 
 instance ( Eq key
