@@ -29,4 +29,3 @@ where
 import Prelude hiding (lookup)
 
 import Data.Cache.LRU.Internal
-import Data.Cache.LRU.Class

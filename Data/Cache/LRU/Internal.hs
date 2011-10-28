@@ -3,7 +3,14 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
--- |
+-- | This module provides access to all the internals use by the LRU
+-- type.  This can be used to create data structures that violate the
+-- invariants the public interface maintains.  Be careful when using
+-- this module.  The 'valid' function can be used to check if an LRU
+-- structure satisfies the invariants the public interface maintains.
+--
+-- If this degree of control isn't needed, consider using
+-- "Data.Cache.LRU" instead.
 module Data.Cache.LRU.Internal where
 
 import Control.Applicative
@@ -16,7 +23,9 @@ import Data.Cache.LRU.Class
 import Prelude hiding (last, lookup, max)
 
 
--- | Stores the information that makes up an LRU cache
+-- | Stores the information that makes up an LRU cache.  This is
+-- parameterized in the type of the store, the link structure, and the
+-- capacity calculation types, as well as the key and value types.
 data LRUImpl store link cap key val =
     LRUImpl { first   :: !(Maybe key)
             , last    :: !(Maybe key)
@@ -25,30 +34,42 @@ data LRUImpl store link cap key val =
             }
 
 
+-- | An LRU that uses Data.Map as a backing store, is not strict in
+-- its values, and has a fixed maximum number of entries
 type LRU key val = LRUImpl OrderedStore NonStrict MaxEntries key val
 
+-- | create a new 'LRU'
 {-# INLINEABLE newLRU #-}
 newLRU :: Ord key => Integer -> LRU key val
 newLRU = emptyLRUImpl . maxEntries
 
 
+-- | An LRU that uses Data.Map as a backing store, is not strict in
+-- its values, and has no maximum number of entries
 type UnlimitedLRU key val = LRUImpl OrderedStore NonStrict Unlimited key val
 
+-- | create a new 'UnlimitedLRU'
 {-# INLINEABLE newUnlimitedLRU #-}
 newUnlimitedLRU :: Ord key => UnlimitedLRU key val
 newUnlimitedLRU = emptyLRUImpl Unlimited
 
 
+-- | An LRU that uses Data.Map as a backing store, is strict to WHNF
+-- in its values, and has a fixed maximum number of entries
 type StrictLRU key val = LRUImpl OrderedStore WHNFStrict MaxEntries key val
 
+-- | create a new 'StrictLRU'
 {-# INLINEABLE newStrictLRU #-}
 newStrictLRU :: Ord key => Integer -> StrictLRU key val
 newStrictLRU = emptyLRUImpl . maxEntries
 
 
+-- | An LRU that uses Data.Map as a backing store, is strict to WHNF
+-- in its values, and has no maximum number of entries
 type StrictUnlimitedLRU key val =
     LRUImpl OrderedStore WHNFStrict Unlimited key val
 
+-- | create a new 'StrictUnlimitedLRU'
 {-# INLINEABLE newStrictUnlimitedLRU #-}
 newStrictUnlimitedLRU :: Ord key => StrictUnlimitedLRU key val
 newStrictUnlimitedLRU = emptyLRUImpl Unlimited
@@ -75,6 +96,11 @@ instance ( Eq key
     show l = "fromList (" ++ show (max l) ++ ") " ++ show (toList l)
 
 
+-- | performs the 'fmap' operation on an 'LRUImpl'.  It's called out
+-- as unsafe because it can violate capacity constraints, if the
+-- capacity in use is sensitive to the values.  This should only be
+-- used to implement 'Functor' when the capacity isn't sensitive to
+-- values.
 {-# INLINEABLE unsafeFmap #-}
 unsafeFmap :: ( Functor (store key)
               , Functor (link key)
@@ -114,6 +140,8 @@ fromList cap l = appendAll $ emptyLRUImpl cap
      ins (k, v) = ((fst . insert k v) .)
 
 
+-- | Retrieve a list view of an LRU.  The items are returned in
+-- order from most recently accessed to least recently accessed.
 {-# INLINEABLE toList #-}
 toList :: ( Eq key
           , Store (store key (link key val)) key (link key val)
@@ -137,6 +165,15 @@ capacity :: LRUImpl store link cap key val -> cap key val
 capacity lru = max lru
 
 
+-- | Add an item to an LRU.  If the key was already present in the
+-- LRU, the value is changed to the new value passed in.  The
+-- item added is marked as the most recently accessed item in the
+-- LRU returned.
+--
+-- If this causes the LRU to exceed its capacity, items are dropped in
+-- order of least-recently used, until the capacity is good.  The list
+-- in the return value consists of any @(key, val)@ pairs dropped from
+-- the 'LRUImpl'
 {-# INLINEABLE insert #-}
 insert :: ( Eq key
           , Store (store key (link key val)) key (link key val)
