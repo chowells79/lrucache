@@ -232,6 +232,8 @@ insert key val lru = maybe emptyCase nonEmptyCase $ first lru
                    , capacity = max' }
 
 
+-- | Look up an item in an 'LRUImple'.  If it was present, it is
+-- marked as the most recently accesed in the returned 'LRUImpl'.
 {-# INLINEABLE lookup #-}
 lookup :: ( Eq key
           , Store (store key (link key val)) key (link key val)
@@ -245,6 +247,8 @@ lookup key lru = case sLookup key $ content lru of
     Just lv -> (hit' key lru, Just . value $ lv)
 
 
+-- | Remove an item from an LRU.  Returns the new LRU, and the value
+-- removed if the key was present.
 {-# INLINEABLE delete #-}
 delete :: ( Eq key
           , Store (store key (link key val)) key (link key val)
@@ -260,6 +264,9 @@ delete key lru = maybe (lru, Nothing) delete'' mLV
     (cont', mLV) = sDelete key $ content lru
 
 
+-- | Removes the least-recently accessed entry from the LRU.
+-- Returns the new LRU, and the key and value from the least-recently
+-- used entry, if there was one.
 {-# INLINEABLE pop #-}
 pop :: ( Eq key
        , Store (store key (link key val)) key (link key val)
@@ -275,6 +282,7 @@ pop lru = if size lru == 0 then (lru, Nothing) else (lru', Just pair)
     pair = (lastKey, lastVal)
 
 
+-- | Returns the number of entries the LRU currently contains.
 {-# INLINEABLE size #-}
 size :: (Store (store key (link key val)) key (link key val))
      => LRUImpl store link cap key val
@@ -283,8 +291,8 @@ size lru = sSize $ content lru
 
 
 -- | Internal function.  Deletes at least one item from the end,
--- continues until the capacity is Good.  *NOT* idempotent.  Returns
--- the items deleted as its second argument, ordered from most
+-- continues until the capacity reports 'Good'.  *NOT* idempotent.
+-- Returns the items deleted as its second argument, ordered from most
 -- recently used to least recently used.
 {-# INLINEABLE iterDel' #-}
 iterDel' :: ( Eq key
