@@ -60,6 +60,11 @@ Extra-source-files:
 
 Cabal-version:       >=1.6
 
+Source-repository this
+  type:              git
+  location:          https://github.com/chowells79/lrucache.git
+  tag:               1.1.1.1
+
 Library
   Exposed-modules:
         Data.Cache.LRU
