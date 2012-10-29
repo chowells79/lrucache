@@ -1,5 +1,5 @@
 Name:                lrucache
-Version:             1.1.1
+Version:             1.1.1.1
 Synopsis:            a simple, pure LRU cache
 License:             BSD3
 License-file:        LICENSE
@@ -18,6 +18,7 @@ Description:
         an LRU cache.
         .
         Version History:
+        1.1.1.1 - Fix containers upper bound for GHC 7.6.
         .
         1.1.1 - Add an additional modification function for AtomicLRUCache.
         .
@@ -68,6 +69,6 @@ Library
 
   Build-depends:
         base >= 4 && < 5,
-        containers >= 0.2 && < 0.5
+        containers >= 0.2 && < 0.6
 
   GHC-options:  -Wall -O2
