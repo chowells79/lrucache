@@ -1,4 +1,5 @@
 {-# OPTIONS_HADDOCK not-home #-}
+{-# LANGUAGE CPP #-}
 
 -- | This module provides access to all the internals use by the LRU
 -- type.  This can be used to create data structures that violate the
@@ -14,6 +15,9 @@ import Prelude hiding ( last, lookup )
 
 import Data.Map ( Map )
 import qualified Data.Map as Map
+#if __GLASGOW_HASKELL__ >= 706
+import qualified Data.Map.Strict as MapStrict
+#endif
 
 -- | Stores the information that makes up an LRU cache
 data LRU key val = LRU {
@@ -245,7 +249,11 @@ delete' key lru cont' lv = if Map.null cont' then deleteOnly else deleteOne
 -- the key isn't present, 'undefined' will be inserted into the 'Map',
 -- which will cause problems later.
 adjust' :: Ord k => (a -> a) -> k -> Map k a -> Map k a
-adjust' f k m = Map.insertWith' (\_ o -> f o) k undefined m
+#if __GLASGOW_HASKELL__ >= 706
+adjust' = MapStrict.adjust
+#else
+adjust' f k m = Map.insertWith' (\_ o -> f o) k (error "adjust' used wrongly") m
+#endif
 
 -- | Internal function.  This checks the four structural invariants
 -- of the LRU cache structure:
