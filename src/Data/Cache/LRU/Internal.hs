@@ -15,7 +15,7 @@ import Prelude hiding ( last, lookup )
 
 import Data.Map ( Map )
 import qualified Data.Map as Map
-#if __GLASGOW_HASKELL__ >= 706
+#if MIN_VERSION_containers(0,5,0)
 import qualified Data.Map.Strict as MapStrict
 #endif
 
@@ -249,7 +249,7 @@ delete' key lru cont' lv = if Map.null cont' then deleteOnly else deleteOne
 -- the key isn't present, 'undefined' will be inserted into the 'Map',
 -- which will cause problems later.
 adjust' :: Ord k => (a -> a) -> k -> Map k a -> Map k a
-#if __GLASGOW_HASKELL__ >= 706
+#if MIN_VERSION_containers(0,5,0)
 adjust' = MapStrict.adjust
 #else
 adjust' f k m = Map.insertWith' (\_ o -> f o) k (error "adjust' used wrongly") m
