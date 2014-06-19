@@ -80,20 +80,26 @@ toList lru = maybe [] (listLinks . content $ lru) $ first lru
 -- If this would cause the LRU to exceed its maximum size, the
 -- least recently used item is dropped from the cache.
 insert :: Ord key => key -> val -> LRU key val -> LRU key val
-insert key val lru = maybe emptyCase nonEmptyCase $ first lru
+insert key val lru = fst (insertInforming key val lru)
+
+-- | Same as 'insert', but also returns element which was dropped from cache.
+insertInforming :: Ord key => key -> val -> LRU key val
+                -> (LRU key val, Maybe (key, val))
+insertInforming key val lru = maybe emptyCase nonEmptyCase $ first lru
     where
       contents = content lru
       full = maybe False (fromIntegral (Map.size contents) ==) $ maxSize lru
       present = key `Map.member` contents
 
       -- this is the case for adding to an empty LRU Cache
-      emptyCase = LRU fl fl (maxSize lru) m'
+      emptyCase = (LRU fl fl (maxSize lru) m', Nothing)
           where
             fl = Just key
             lv = Link val Nothing Nothing
             m' = Map.insert key lv contents
 
-      nonEmptyCase firstKey = if present then hitSet else add firstKey
+      nonEmptyCase firstKey = if present then (hitSet, Nothing)
+                              else add firstKey
 
       -- this updates the value stored with the key, then marks it as
       -- the most recently accessed
@@ -103,7 +109,8 @@ insert key val lru = maybe emptyCase nonEmptyCase $ first lru
 
       -- create a new LRU with a new first item, and
       -- conditionally dropping the last item
-      add firstKey = if full then lru'' else lru'
+      add firstKey = if full then (lru'', Just (key, val))
+                     else (lru', Nothing)
           where
             -- add a new first item
             firstLV' = Link val Nothing $ Just firstKey
