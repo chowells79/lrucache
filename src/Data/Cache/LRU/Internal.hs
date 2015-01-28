@@ -271,8 +271,8 @@ valid lru = maybe True (fromIntegral (size lru) <=) (maxSize lru) &&
             size lru == length orderedKeys &&
             all (`Map.member` contents) orderedKeys
     where contents = content lru
-          orderedKeys = traverse next . first $ lru
-          traverse _ Nothing = []
-          traverse f (Just k) = let Just k' = Map.lookup k contents
-                                in k : (traverse f . f $ k')
-          reverseKeys = traverse prev . last $ lru
+          orderedKeys = walk next . first $ lru
+          walk _ Nothing = []
+          walk f (Just k) = let Just k' = Map.lookup k contents
+                                in k : (walk f . f $ k')
+          reverseKeys = walk prev . last $ lru
