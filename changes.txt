@@ -1,3 +1,8 @@
+** 1.2.0.0
+* fix build warning on GHC 7.10
+* add insertInforming
+
+
 ** 1.1.1.4
 * move changelog to hackage 2 approved location
 
@@ -6,7 +11,7 @@
 * Test for containers >= 0.5, rather than GHC >= 7.6
 
 
-** 1.1.1.2 
+** 1.1.1.2
 * Make actually compatible with containers 0.5 - fix strictness issue
 
 
