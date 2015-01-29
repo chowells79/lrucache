@@ -85,11 +85,21 @@ toList lru = maybe [] (listLinks . content $ lru) $ first lru
                Nothing -> [keyval]
                Just nk -> keyval : listLinks m nk
 
-elems :: (Ord key, Applicative f, Contravariant f)
+-- | Traverse the (key, value) pairs of the LRU, in a read-only
+-- way. This is a 'Fold' in the sense used by the
+-- <https://hackage.haskell.org/package/lens lens package>. It must be
+-- read-only because alterations could break the underlying 'Map'
+-- structure.
+pairs :: (Ord key, Applicative f, Contravariant f)
       => ((key, val) -> f (key, val))
       -> LRU key val -> f (LRU key val)
-elems f l = () >$ (traverse_ f $ toList l)
+pairs f l = () >$ (traverse_ f $ toList l)
 
+-- | Traverse the keys of the LRU, in a read-only
+-- way. This is a 'Fold' in the sense used by the
+-- <https://hackage.haskell.org/package/lens lens package>. It must be
+-- read-only because alterations could break the underlying 'Map'
+-- structure.
 keys :: (Ord key, Applicative f, Contravariant f)
      => (key -> f key)
      -> LRU key val -> f (LRU key val)
