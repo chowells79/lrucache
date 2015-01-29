@@ -20,6 +20,8 @@ import qualified Data.Map as Map
 import qualified Data.Map.Strict as MapStrict
 #endif
 
+import Control.Applicative (liftA2)
+import Data.Traversable (foldMapDefault)
 import Data.Data (Data)
 import Data.Typeable (Typeable)
 
@@ -29,8 +31,17 @@ data LRU key val = LRU {
     , last :: !(Maybe key) -- ^ the key of the least recently accessed entry
     , maxSize :: !(Maybe Integer) -- ^ the maximum size of the LRU cache
     , content :: !(Map key (LinkedVal key val)) -- ^ the backing 'Map'
-    } deriving (Eq, Data, Typeable, Functor, Foldable, Traversable)
+    } deriving (Eq, Data, Typeable, Functor)
 
+instance (Ord key) => Traversable (LRU key) where
+    traverse f l = fmap (fromList (maxSize l)) . go $ toList l
+      where
+        go [] = pure []
+        go (x:xs) = liftA2 (:) (g x) (go xs)
+        g (a, b) = fmap ((,) a) $ f b
+
+instance (Ord key) => Foldable (LRU key) where
+    foldMap = foldMapDefault
 
 instance (Ord key, Show key, Show val) => Show (LRU key val) where
     show lru = "fromList " ++ show (toList lru)
