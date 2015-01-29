@@ -13,6 +13,7 @@ module Data.Cache.LRU
     , toList
     , maxSize
     , insert
+    , insertInforming
     , lookup
     , delete
     , pop
