@@ -1,5 +1,6 @@
 {-# OPTIONS_HADDOCK not-home #-}
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, DeriveFunctor,
+             DeriveFoldable, DeriveTraversable #-}
 
 -- | This module provides access to all the internals use by the LRU
 -- type.  This can be used to create data structures that violate the
@@ -19,20 +20,20 @@ import qualified Data.Map as Map
 import qualified Data.Map.Strict as MapStrict
 #endif
 
+import Data.Data (Data)
+import Data.Typeable (Typeable)
+
 -- | Stores the information that makes up an LRU cache
 data LRU key val = LRU {
       first :: !(Maybe key) -- ^ the key of the most recently accessed entry
     , last :: !(Maybe key) -- ^ the key of the least recently accessed entry
     , maxSize :: !(Maybe Integer) -- ^ the maximum size of the LRU cache
     , content :: !(Map key (LinkedVal key val)) -- ^ the backing 'Map'
-    } deriving Eq
+    } deriving (Eq, Data, Typeable, Functor, Foldable, Traversable)
 
 
 instance (Ord key, Show key, Show val) => Show (LRU key val) where
     show lru = "fromList " ++ show (toList lru)
-
-instance Functor (LRU key) where
-    fmap f lru = lru { content = fmap (fmap f) . content $ lru }
 
 -- | The values stored in the Map of the LRU cache.  They embed a
 -- doubly-linked list through the values of the 'Map'.
@@ -40,10 +41,7 @@ data LinkedVal key val = Link {
       value :: val -- ^ The actual value
     , prev :: !(Maybe key) -- ^ the key of the value before this one
     , next :: !(Maybe key) -- ^ the key of the value after this one
-    } deriving Eq
-
-instance Functor (LinkedVal key) where
-    fmap f lv = lv { value = f . value $ lv }
+    } deriving (Eq, Data, Typeable, Functor, Foldable, Traversable)
 
 -- | Make an LRU.  If a size limit is specified, the LRU is guaranteed
 -- to not grow above the specified number of entries.

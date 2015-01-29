@@ -1,4 +1,5 @@
 {-# OPTIONS_HADDOCK not-home #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 -- | This module contains a mutable wrapping of an LRU in the IO
 -- monad, providing atomic access in a concurrent environment.  All
@@ -22,8 +23,10 @@ import Control.Exception ( bracketOnError )
 import Data.Cache.LRU ( LRU )
 import qualified Data.Cache.LRU as LRU
 
+import Data.Typeable (Typeable)
+
 -- | The opaque wrapper type
-newtype AtomicLRU key val = C (MVar (LRU key val))
+newtype AtomicLRU key val = C (MVar (LRU key val)) deriving Typeable
 
 -- | Make a new AtomicLRU that will not grow beyond the optional
 -- maximum size, if specified.
