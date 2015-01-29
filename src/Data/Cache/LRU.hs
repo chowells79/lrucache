@@ -11,6 +11,8 @@ module Data.Cache.LRU
     , newLRU
     , fromList
     , toList
+    , elems
+    , keys
     , maxSize
     , insert
     , insertInforming

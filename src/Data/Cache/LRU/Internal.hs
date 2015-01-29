@@ -12,7 +12,11 @@
 -- "Data.Cache.LRU" instead.
 module Data.Cache.LRU.Internal where
 
-import Prelude hiding ( last, lookup )
+import Control.Applicative (Applicative, pure, liftA2)
+import Data.Traversable (Traversable(traverse), foldMapDefault)
+import Data.Foldable (Foldable(foldMap), traverse_)
+
+import Prelude hiding (last, lookup)
 
 import Data.Map ( Map )
 import qualified Data.Map as Map
@@ -20,10 +24,10 @@ import qualified Data.Map as Map
 import qualified Data.Map.Strict as MapStrict
 #endif
 
-import Control.Applicative (liftA2)
-import Data.Traversable (foldMapDefault)
 import Data.Data (Data)
 import Data.Typeable (Typeable)
+
+import Data.Functor.Contravariant (Contravariant((>$)))
 
 -- | Stores the information that makes up an LRU cache
 data LRU key val = LRU {
@@ -34,7 +38,7 @@ data LRU key val = LRU {
     } deriving (Eq, Data, Typeable, Functor)
 
 instance (Ord key) => Traversable (LRU key) where
-    traverse f l = fmap (fromList (maxSize l)) . go $ toList l
+    traverse f l = fmap (fromList $ maxSize l) . go $ toList l
       where
         go [] = pure []
         go (x:xs) = liftA2 (:) (g x) (go xs)
@@ -81,6 +85,16 @@ toList lru = maybe [] (listLinks . content $ lru) $ first lru
                Nothing -> [keyval]
                Just nk -> keyval : listLinks m nk
 
+elems :: (Ord key, Applicative f, Contravariant f)
+      => ((key, val) -> f (key, val))
+      -> LRU key val -> f (LRU key val)
+elems f l = () >$ (traverse_ f $ toList l)
+
+keys :: (Ord key, Applicative f, Contravariant f)
+     => (key -> f key)
+     -> LRU key val -> f (LRU key val)
+keys f l = () >$ (traverse_ (f . fst) $ toList l)
+
 -- | Add an item to an LRU.  If the key was already present in the
 -- LRU, the value is changed to the new value passed in.  The
 -- item added is marked as the most recently accessed item in the
@@ -91,7 +105,8 @@ toList lru = maybe [] (listLinks . content $ lru) $ first lru
 insert :: Ord key => key -> val -> LRU key val -> LRU key val
 insert key val lru = fst (insertInforming key val lru)
 
--- | Same as 'insert', but also returns element which was dropped from cache.
+-- | Same as 'insert', but also returns element which was dropped from
+-- cache, if any.
 insertInforming :: Ord key => key -> val -> LRU key val
                 -> (LRU key val, Maybe (key, val))
 insertInforming key val lru = maybe emptyCase nonEmptyCase $ first lru
