@@ -1,6 +1,7 @@
 ** 1.2.0.0
 * fix build warning on GHC 7.10
 * add insertInforming
+* add instances for Data, Typeable, Foldable, and Traversable
 
 
 ** 1.1.1.4
