@@ -2,6 +2,7 @@
 * fix build warning on GHC 7.10
 * add insertInforming
 * add instances for Data, Typeable, Foldable, and Traversable
+* add functions for compatibility with lens
 
 
 ** 1.1.1.4
