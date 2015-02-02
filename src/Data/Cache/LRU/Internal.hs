@@ -1,5 +1,5 @@
 {-# OPTIONS_HADDOCK not-home #-}
-{-# LANGUAGE CPP, DeriveDataTypeable, DeriveFunctor,
+{-# LANGUAGE DeriveDataTypeable, DeriveFunctor,
              DeriveFoldable, DeriveTraversable #-}
 
 -- | This module provides access to all the internals use by the LRU
@@ -17,12 +17,6 @@ import Data.Traversable (Traversable(traverse), foldMapDefault)
 import Data.Foldable (Foldable(foldMap), traverse_)
 
 import Prelude hiding (last, lookup)
-
-import Data.Map ( Map )
-import qualified Data.Map as Map
-#if MIN_VERSION_containers(0,5,0)
-import qualified Data.Map.Strict as MapStrict
-#endif
 
 import Data.Data (Data)
 import Data.Typeable (Typeable)
@@ -290,11 +284,7 @@ delete' key lru cont' lv = if Map.null cont' then deleteOnly else deleteOne
 -- the key isn't present, 'undefined' will be inserted into the 'Map',
 -- which will cause problems later.
 adjust' :: Ord k => (a -> a) -> k -> Map k a -> Map k a
-#if MIN_VERSION_containers(0,5,0)
 adjust' = MapStrict.adjust
-#else
-adjust' f k m = Map.insertWith' (\_ o -> f o) k (error "adjust' used wrongly") m
-#endif
 
 -- | Internal function.  This checks the four structural invariants
 -- of the LRU cache structure:
