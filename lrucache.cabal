@@ -52,7 +52,7 @@ Library
 
 test-suite unittests
   type: exitcode-stdio-1.0
-  main-is: InsertInforming.hs
+  main-is: main.hs
   hs-source-dirs: unittests
   build-depends: lrucache, base, hspec, hspec-core, QuickCheck, Cabal
   default-language: Haskell2010
