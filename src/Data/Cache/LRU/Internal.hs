@@ -143,7 +143,7 @@ insertInforming key val lru = maybe emptyCase nonEmptyCase $ first lru
 
       -- create a new LRU with a new first item, and
       -- conditionally dropping the last item
-      add firstKey = if full then (lru'', Just (key, val))
+      add firstKey = if full then (lru'', Just (lastKey, lastVal))
                      else (lru', Nothing)
           where
             -- add a new first item
@@ -156,6 +156,7 @@ insertInforming key val lru = maybe emptyCase nonEmptyCase $ first lru
             -- remove the last item
             Just lastKey = last lru'
             Just lastLV = Map.lookup lastKey contents'
+            Just lastVal = snd $ lookup lastKey lru
             contents'' = Map.delete lastKey contents'
             lru'' = delete' lastKey lru' contents'' lastLV
 
