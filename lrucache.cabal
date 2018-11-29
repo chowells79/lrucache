@@ -1,5 +1,5 @@
 Name:                lrucache
-Version:             1.2.0.0
+Version:             1.2.0.1
 Synopsis:            a simple, pure LRU cache
 License:             BSD3
 License-file:        LICENSE
@@ -30,7 +30,7 @@ Cabal-version:       >=1.6
 Source-repository this
   type:              git
   location:          https://github.com/chowells79/lrucache.git
-  tag:               1.2.0.0
+  tag:               1.2.0.1
 
 Library
   Exposed-modules:

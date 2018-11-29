@@ -1,3 +1,8 @@
+** 1.2.0.1
+* Bumped version bound on containers. Pull request contributed by mstksg
+* Finally fixed long-standing error in insertInforming
+
+
 ** 1.2.0.0
 * fix build warning on GHC 7.10
 * add insertInforming
